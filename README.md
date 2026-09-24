@@ -1,13 +1,15 @@
-# 咲耶ジャンプバグ（プロトタイプ）
+# 咲耶ジャンプバグ
 
 レトロゲーム「ジャンプバグ」風の横スクロール。⌐◨-◨カーは地面や屋根に触れるたびに勝手に跳ねる。
 画面は本家と同じく**強制スクロール**で、一定の速さで勝手に進む。何も押さなければ車は画面について走り、
 →で前へ出て、←でバックする。画面は止まらないが、画面の中は自由に動けるので、
 通り過ぎたコインやCNPも左端に消える前なら取りに戻れる（咲耶スクランブルと同じ）。車は常に前を向き、
 自動連射も前へ撃ち続ける。壁と画面の左端にはさまれるとミス。
-CNPを拾いながらゴールの鳥居を目指す。公開URLは `https://sakuya.naoblock.jp/jumpbug/`。
+CNPを拾いながらゴールの鳥居を目指す。公開URLは `https://jumpbug.naoblock.jp/`（GitHub Pages）。
+姉妹作: [咲耶スクランブル](https://sakuya.naoblock.jp/) / [咲耶Nounラリー](https://rally.naoblock.jp/)
 
-- 単一ファイル（`index.html`）。画像は本家の `../assets/cnp/*.png`（CNP 11体）と `../image01.png`（咲耶の表情）を使う
+- 単一ファイル（`index.html`）。画像は `assets/cnp/*.png`（CNP 11体）と `assets/sakuya_pilot.png`（咲耶の表情5コマ）。
+  どちらも咲耶スクランブルから複製したもの。`favicon-32.png` / `apple-touch-icon.png` も同じく複製
 - 音はWebAudioで生成しているので、音声ファイルは不要
 
 ## 操作

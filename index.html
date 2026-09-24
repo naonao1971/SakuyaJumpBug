@@ -11,9 +11,11 @@
   <title>SAKUYA JUMP BUG ─ ⌐◨-◨ CAR</title>
   <meta property="og:type" content="website" />
   <meta property="og:title" content="SAKUYA JUMP BUG ─ ⌐◨-◨ CAR" />
+  <meta property="og:url" content="https://jumpbug.naoblock.jp/" />
   <meta property="og:description" content="⌐◨-◨カーで跳ねながら城下町・洞窟・天守を抜け、CNP11体を拾ってゴールの鳥居を目指す横スクロールゲーム（プロトタイプ）" />
-  <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32.png" />
-  <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="manifest" href="manifest.json" />
   <!-- 本家「咲耶スクランブル」と同じ書体。display=欧文/数字、body=和文 -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -278,7 +280,7 @@
     画面は一定の速さで勝手に進む（強制スクロール）。壁と画面の左端にはさまれてもミス。敵は撃つか上から踏むと倒せる。溶岩に落ちる・トゲや敵に当たる・燃料切れでミス。途中の提灯がチェックポイント。
   </div>
   <footer>
-    本作は CryptoNinja / CryptoNinja Partners / Nouns の非公式ファンアートです ─ <a href="../">咲耶スクランブルへ</a>
+    本作は CryptoNinja / CryptoNinja Partners / Nouns の非公式ファンアートです ─ 姉妹作: <a href="https://sakuya.naoblock.jp/">咲耶スクランブル</a> / <a href="https://rally.naoblock.jp/">咲耶Nounラリー</a>
   </footer>
 
   <script>
@@ -433,13 +435,13 @@
         g.fillRect(0, 0, 64, 64);
         ch.sil = s;
       };
-      ch.img.src = "../assets/cnp/" + ch.id + ".png";
+      ch.img.src = "assets/cnp/" + ch.id + ".png";
       return ch;
     });
 
     // 咲耶の表情シート(本家 image01.png)。①通常 ②被弾 ③怒り ④苦痛 ⑤決意
     const pilotImg = new Image();
-    pilotImg.src = "../image01.png";
+    pilotImg.src = "assets/sakuya_pilot.png";
     const PILOT_SLOTS = [
       { x: 0, y: 0, w: 557, h: 470 },
       { x: 557, y: 0, w: 557, h: 470 },
@@ -2390,7 +2392,7 @@
     //  - 共有シートが無い環境では画像を保存してから投稿画面を開き、手動で添付してもらう
     //    (Xの投稿画面はURL経由での画像添付に対応していない)
     // ------------------------------------------------------------------
-    const SHARE_URL = "https://sakuya.naoblock.jp/jumpbug/";
+    const SHARE_URL = "https://jumpbug.naoblock.jp/";
     function buildShareText() {
       const got = state.rescued.filter(Boolean).length;
       const score = state.score.toLocaleString();
@@ -2499,7 +2501,7 @@
       g.fillText("#咲耶ジャンプバグ", CW / 2, 600);
       g.fillStyle = C.dim;
       g.font = C.font(11);
-      g.fillText("sakuya.naoblock.jp/jumpbug", CW / 2, 628);
+      g.fillText("jumpbug.naoblock.jp", CW / 2, 628);
       return card;
     }
 
