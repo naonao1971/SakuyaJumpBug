@@ -11,7 +11,14 @@ CNPを拾いながらゴールの鳥居を目指す。公開URLは `https://jump
 姉妹作: [咲耶スクランブル](https://sakuya.naoblock.jp/) / [咲耶Nounラリー](https://rally.naoblock.jp/)
 
 - 単一ファイル（`index.html`）。画像は `assets/cnp/*.png`（CNP 11体）と `assets/sakuya_pilot.png`（咲耶の表情5コマ）。
-  どちらも咲耶スクランブルから複製したもの。`favicon-32.png` / `apple-touch-icon.png` も同じく複製
+  どちらも咲耶スクランブルから複製したもの
+- アイコン（`apple-touch-icon.png` 180px / `favicon-32.png` 32px）はこの作品専用。`tools/mkicon.py` で作る
+  （要 Pillow）。姉妹作と同じ「暗い四角＋金の枠」に、ゲーム中のドット絵の⌐◨-◨カーを宙に浮かせて描く。
+  車の絵は `index.html` の `CAR_SPRITE` などをそのまま読むので、車を描き直したら流し直すだけでよい
+
+```
+python3 tools/mkicon.py apple-touch-icon.png favicon-32.png
+```
 - 音はWebAudioで生成しているので、音声ファイルは不要
 
 ## 操作
