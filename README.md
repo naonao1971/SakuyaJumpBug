@@ -10,6 +10,7 @@ CNPを拾いながらゴールの鳥居を目指す。公開URLは `https://jump
 
 - 単一ファイル（`index.html`）。画像は `assets/cnp/*.png`（CNP 11体）と `assets/sakuya_pilot.png`（咲耶の表情5コマ）。
   どちらも咲耶スクランブルから複製したもの
+- `assets/title.jpg`（1200×629）はタイトル画。OGP / X カードの画像と、スマホを縦に持ったときの「横向きにしてね」の画面に使う
 - アイコン（`apple-touch-icon.png` 180px / `favicon-32.png` 32px）はこの作品専用。`tools/mkicon.py` で作る
   （要 Pillow）。咲耶スクランブルの三角形と同じく形だけで見せる: 暗い四角＋金の枠の中に、
   屋根に ⌐◨-◨ を乗せた 🚙 型の車が機首を上げて跳ね上がるシルエットを、マゼンタの塗り＋金の縁取り＋
