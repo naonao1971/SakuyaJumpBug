@@ -5,7 +5,9 @@
 →で前へ出て、←でバックする。画面は止まらないが、画面の中は自由に動けるので、
 通り過ぎたコインやCNPも左端に消える前なら取りに戻れる（咲耶スクランブルと同じ）。車は常に前を向き、
 自動連射も前へ撃ち続ける。壁と画面の左端にはさまれるとミス。
-CNPを拾いながらゴールの鳥居を目指す。公開URLは `https://jumpbug.naoblock.jp/`（GitHub Pages）。
+CNPを拾いながらゴールの鳥居を目指す。公開URLは `https://jumpbug.naoblock.jp/`（GitHub Pages）の予定。DNS の設定が済むまでは
+`https://naonao1971.github.io/SakuyaJumpBug/` で仮公開している（そのあいだ `CNAME` は置かない。
+独自ドメインへ移るときに `jumpbug.naoblock.jp` と1行書いた `CNAME` を戻す）。
 姉妹作: [咲耶スクランブル](https://sakuya.naoblock.jp/) / [咲耶Nounラリー](https://rally.naoblock.jp/)
 
 - 単一ファイル（`index.html`）。画像は `assets/cnp/*.png`（CNP 11体）と `assets/sakuya_pilot.png`（咲耶の表情5コマ）。
