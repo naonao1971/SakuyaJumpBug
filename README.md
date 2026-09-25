@@ -13,8 +13,8 @@ CNPを拾いながらゴールの鳥居を目指す。公開URLは `https://jump
 - 単一ファイル（`index.html`）。画像は `assets/cnp/*.png`（CNP 11体）と `assets/sakuya_pilot.png`（咲耶の表情5コマ）。
   どちらも咲耶スクランブルから複製したもの
 - アイコン（`apple-touch-icon.png` 180px / `favicon-32.png` 32px）はこの作品専用。`tools/mkicon.py` で作る
-  （要 Pillow）。姉妹作と同じ「暗い四角＋金の枠」に、ゲーム中のドット絵の⌐◨-◨カーを宙に浮かせて描く。
-  車の絵は `index.html` の `CAR_SPRITE` などをそのまま読むので、車を描き直したら流し直すだけでよい
+  （要 Pillow）。咲耶スクランブルの三角形と同じく形だけで見せる: 暗い四角＋金の枠の中に、
+  🚙 型の車の屋根に ⌐◨-◨ が乗ったシルエットを、マゼンタの塗り＋金の縁取り＋淡い光で描く
 
 ```
 python3 tools/mkicon.py apple-touch-icon.png favicon-32.png
