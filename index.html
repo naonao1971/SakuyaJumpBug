@@ -113,35 +113,18 @@
       gap: 10px;
     }
     .pad.right { right: 8px; align-items: flex-end; }
-    /* SHOT と JUMP は同じ大きさにそろえる */
+    /* バルカンと JUMP は同じ大きさにそろえる */
     .pad button {
       width: clamp(52px, 17vh, 76px);
       height: clamp(52px, 17vh, 76px);
     }
     .pad button.jump { color: var(--magenta); }
     .pad.right { align-items: center; }
-    /* 自動連射の切り替え(咲耶スクランブルと同じ長押しトグル)。
-       SHOT の隣にあるので、かすめただけで切り替わらないよう長押しにする。
-       押している間は琥珀が下から満ち、満ちてから離すと切り替わる */
-    .pad button.auto {
-      width: 44px;
-      height: 44px;
-      color: var(--gold);
-      opacity: 0.55;
-    }
-    .pad button.auto.on { opacity: 1; box-shadow: var(--bevel-up), 0 0 0 2px var(--magenta); }
-    .hold-toggle { position: relative; overflow: hidden; }
-    .hold-toggle::after {
-      content: "";
-      position: absolute;
-      left: 0; bottom: 0;
-      width: 100%; height: 0;
-      background: rgba(232, 197, 106, 0.38);
-      pointer-events: none;
-    }
-    .hold-toggle.holding::after { height: 100%; transition: height 600ms linear; }
-    @media (prefers-reduced-motion: reduce) { .hold-toggle.holding::after { transition: none; } }
-    .pad button.fire { color: var(--gold); }
+    /* バルカン(ショット)ボタン。自動連射の切り替えと手動の発射を1つにまとめる。
+       自動連射がオンの間はマゼンタで縁取り、オフのときは少し薄くする */
+    .pad button.vulcan { color: var(--gold); opacity: 0.6; }
+    .pad button.vulcan.on { opacity: 1; box-shadow: var(--bevel-up), 0 0 0 2px var(--magenta); }
+    .pad button.vulcan.firing { box-shadow: var(--bevel-down); background: rgba(232, 197, 106, 0.3); }
 
     /* スマホ横持ちでは余白を捨てて画面いっぱいに使う */
     body.touch {
@@ -296,8 +279,7 @@
     <div id="joyhint" aria-hidden="true"></div>
     <div id="joyhintcap" aria-hidden="true">左半分のどこでも押したまま倒す</div>
     <div class="pad right">
-      <button id="btnAuto" type="button" class="auto hold-toggle" aria-label="自動連射:オン(長押しでオフ)" data-icon="auto"></button>
-      <button type="button" class="fire" data-key="fire" aria-label="ショット" data-icon="shot"></button>
+      <button id="btnVulcan" type="button" class="vulcan" aria-label="バルカン:自動連射オン(タップで切り替え・長押しで撃つ)" data-icon="auto"></button>
       <button type="button" class="jump" data-key="jump" aria-label="ジャンプ" data-icon="jump"></button>
     </div>
     <!-- 一時停止。咲耶スクランブルと同じく画面の真ん中に薄く置き、止めている間だけはっきり出す -->
@@ -328,8 +310,6 @@
     const ICONS = {
       jump: [".....#.....", "....###....", "...#####...", "..#######..", ".#########.", "....###....",
              "....###....", "....###....", "....###....", "...........", "..#######.."],
-      shot: ["...........", "...........", "......##...", "......###..", "#.##.#####.", "#.##.######",
-             "#.##.#####.", "......###..", "......##...", "...........", "..........."],
       pause: ["...........", "..##...##..", "..##...##..", "..##...##..", "..##...##..", "..##...##..",
               "..##...##..", "..##...##..", "..##...##..", "..##...##..", "..........."],
       play: ["...........", "..#........", "..##.......", "..###......", "..####.....", "..#####....",
@@ -2040,7 +2020,7 @@
       ctx.font = C.jfont(16);
       ctx.fillStyle = C.ink;
       const lines = isTouch
-        ? ["左半分を押したまま倒す: 左右で前後／上でジャンプ", "右半分(または JUMP)長押しで高く、空中でもう2回まで跳べる　SHOT で撃つ"]
+        ? ["左半分を押したまま倒す: 左右で前後／上でジャンプ", "右半分(または JUMP)長押しで高く、空中でもう2回まで跳べる　バルカン: タップで自動連射"]
         : ["← → 前進・バック　　SPACE / ↑ 長押しで高く跳ぶ　　X 撃つ", "長押しで高く跳ぶ。空中でもう2回まで跳べる"];
       ctx.fillText(lines[0], W / 2, 226);
       ctx.fillStyle = C.dim;
@@ -2229,7 +2209,7 @@
       state.paused = p;
       // 押したまま止めると pointerup が来ないことがある。再開した瞬間に
       // その向きへ走り出さないよう、止めるときに入力を捨てる
-      if (p) { for (const k in input) input[k] = false; joyEnd(); document.querySelectorAll(".pad button[data-key].on").forEach((b) => b.classList.remove("on")); }
+      if (p) { for (const k in input) input[k] = false; joyEnd(); document.querySelectorAll(".pad button[data-key].on").forEach((b) => b.classList.remove("on")); vulcanBtn.classList.remove("firing"); }
       if (p) BGM.stop(); else if (state.phase === "play") BGM.start();
       setIcon(pauseBtn, p ? "play" : "pause");
       pauseBtn.classList.toggle("paused", p);
@@ -2278,15 +2258,19 @@
       btn.addEventListener("contextmenu", (e) => e.preventDefault());
     });
     // ------------------------------------------------------------------
-    // 自動連射(咲耶スクランブルと同じ)。スマホでは最初からオン、PCはオフ。
-    // ボタンは長押し(600ms)で切り替え。短いタップでは切り替えず、やり方を知らせる。
-    // PC は V キーで切り替え
+    // バルカン(咲耶スクランブルと同じ自動連射つき)。スマホでは最初から自動連射オン、PCはオフ。
+    // 自動連射の切り替えと手動の発射を1つのボタンにまとめる:
+    //  - 短くタップ → 自動連射のオン/オフを切り替える
+    //  - 押し続ける → 押している間だけ撃つ(自動連射オフのときの手動射撃)
+    // PC は X で撃ち、V で自動連射を切り替える
     // ------------------------------------------------------------------
-    const HOLD_TOGGLE_MS = 600;
-    const autoBtn = document.getElementById("btnAuto");
+    const VULCAN_TAP_MS = 250;   // これより短く離したらタップ(切り替え)とみなす
+    const vulcanBtn = document.getElementById("btnVulcan");
     function updateAutoUI() {
-      autoBtn.classList.toggle("on", autoFire);
-      autoBtn.setAttribute("aria-label", autoFire ? "自動連射:オン(長押しでオフ)" : "自動連射:オフ(長押しでオン)");
+      vulcanBtn.classList.toggle("on", autoFire);
+      vulcanBtn.setAttribute("aria-label", autoFire
+        ? "バルカン:自動連射オン(タップで切り替え・長押しで撃つ)"
+        : "バルカン:自動連射オフ(タップで切り替え・長押しで撃つ)");
     }
     // 後からタッチ端末だと分かったときも、スマホと同じく自動連射をオンにする
     let autoTouched = false;
@@ -2299,28 +2283,34 @@
       autoTouched = true;
       autoFire = !autoFire;
       updateAutoUI();
-      showToast(autoFire ? "自動連射: オン" : "自動連射: オフ");
+      showToast(autoFire ? "バルカン自動連射: オン" : "バルカン自動連射: オフ");
     }
-    (function bindHoldToggle(button, action, onShortTap) {
+    (function bindVulcan(button) {
       let startedAt = 0;
-      const clear = () => { startedAt = 0; button.classList.remove("holding"); };
+      const release = () => {
+        startedAt = 0;
+        input.fire = false;
+        button.classList.remove("firing");
+      };
       button.addEventListener("pointerdown", (e) => {
         e.preventDefault();
         e.stopPropagation();
         try { button.setPointerCapture(e.pointerId); } catch (err) { /* 古いブラウザ */ }
         startedAt = performance.now();
-        button.classList.add("holding");
+        input.fire = true;               // 押した瞬間から撃つ(長押しならそのまま撃ち続ける)
+        button.classList.add("firing");
+        startOrRestart();
       });
       button.addEventListener("pointerup", (e) => {
         e.preventDefault();
-        const long = startedAt > 0 && performance.now() - startedAt >= HOLD_TOGGLE_MS;
-        clear();
-        if (long) action(); else onShortTap();
+        const tap = startedAt > 0 && performance.now() - startedAt < VULCAN_TAP_MS;
+        release();
+        if (tap && state.phase === "play") toggleAutoFire();
       });
-      button.addEventListener("pointercancel", clear);
-      button.addEventListener("lostpointercapture", clear);
+      button.addEventListener("pointercancel", release);
+      button.addEventListener("lostpointercapture", release);
       button.addEventListener("contextmenu", (e) => e.preventDefault());
-    })(autoBtn, toggleAutoFire, () => showToast("長押しで自動連射を切り替え"));
+    })(vulcanBtn);
     updateAutoUI();
 
     // ------------------------------------------------------------------
@@ -2329,7 +2319,7 @@
     //  - 左右に倒すと加速/減速、上に倒すとジャンプ(長押しと同じ)
     //  - 原点は指から JOY_R 以内へ引きずる。固定だと逆へ切り返すのに指を大きく
     //    戻す必要がある(ラリーでの実測: 固定90px → 追従30px)
-    //  右手は JUMP / SHOT ボタン
+    //  右手は JUMP / バルカンボタン
     // ------------------------------------------------------------------
     const JOY_DEAD = 10;   // 中心からこれ未満は無入力
     const JOY_R = 24;      // 原点が指を追う半径
