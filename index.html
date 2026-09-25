@@ -189,6 +189,36 @@
     }
     @media (prefers-reduced-motion: reduce) { #joyhint { animation: none; opacity: 0.8; } }
 
+    /* 一時停止ボタン(咲耶スクランブルと同じ見た目・位置)。canvas は .wrap をぴったり
+       埋めているので、CSS の 50% がそのまま画面の中心になる。
+       プレイ中は 0.1 まで薄くして邪魔にならないようにし、止めている間だけはっきり出す */
+    .pause-button {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 7;
+      width: 56px;
+      height: 56px;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      border: 2px solid var(--edge-lit);
+      border-radius: 0;
+      background: var(--panel);
+      color: var(--ink);
+      opacity: 0.1;
+      box-shadow: var(--bevel-up);
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: opacity 0.15s ease;
+    }
+    .pause-button svg { width: 26px; height: 26px; }
+    .pause-button:active { box-shadow: var(--bevel-down); transform: translate(-50%, -50%) translateY(2px); }
+    .pause-button.paused { opacity: 0.95; }
+    .pause-button[hidden] { display: none; }
+    @media (hover: hover) { .pause-button:hover { opacity: 0.6; } .pause-button.paused:hover { opacity: 0.95; } }
+
     .share {
       position: absolute;
       left: 50%;
@@ -259,7 +289,6 @@
     <canvas id="game" width="960" height="540" aria-label="咲耶ジャンプバグ ゲーム画面"></canvas>
     <div class="sys">
       <button id="btnPad" type="button" aria-label="タッチ操作ボタンの表示切り替え" data-icon="pad"></button>
-      <button id="btnPause" type="button" aria-label="一時停止" data-icon="pause"></button>
       <button id="btnMute" type="button" aria-label="音のオン/オフ" data-icon="sound"></button>
     </div>
     <!-- バーチャルスティック(姉妹作「咲耶Nounラリー」と同じ浮動式)。
@@ -271,6 +300,8 @@
       <button type="button" class="fire" data-key="fire" aria-label="ショット" data-icon="shot"></button>
       <button type="button" class="jump" data-key="jump" aria-label="ジャンプ" data-icon="jump"></button>
     </div>
+    <!-- 一時停止。咲耶スクランブルと同じく画面の真ん中に薄く置き、止めている間だけはっきり出す -->
+    <button id="btnPause" class="pause-button" type="button" aria-label="一時停止" data-icon="pause" hidden></button>
     <button id="btnShare" class="share" type="button" hidden>𝕏 でシェア</button>
   </div>
 
@@ -1925,7 +1956,7 @@
       }
 
       // ゾーン名のテロップ
-      if (state.caption && state.phase === "play") {
+      if (state.caption && state.phase === "play" && !state.paused) {
         const z = state.caption.zone;
         const a = Math.min(1, state.caption.t / 20);
         ctx.globalAlpha = a;
@@ -2101,11 +2132,12 @@
       if (state.phase === "clear") drawResult("STAGE CLEAR!", C.gold);
       if (state.phase === "over") drawResult("GAME OVER", C.danger);
       if (state.paused) {
-        panel(W / 2 - 120, H / 2 - 40, 240, 80);
+        // 真ん中には再開ボタンがあるので、文字はその上に出す
+        panel(W / 2 - 120, H / 2 - 130, 240, 70);
         ctx.textAlign = "center";
         ctx.font = C.font(18);
         ctx.fillStyle = C.gold;
-        ctx.fillText("PAUSE", W / 2, H / 2 + 8);
+        ctx.fillText("PAUSE", W / 2, H / 2 - 86);
         ctx.textAlign = "left";
       }
       drawCrt();
@@ -2131,6 +2163,9 @@
       }
       render();
       joyHintUpdate();
+      // 一時停止ボタンはプレイ中だけ出す(タイトル・リザルトでは出さない)
+      const showPause = state.phase === "play" || state.phase === "dying" || state.phase === "goal";
+      if (pauseBtn.hidden === showPause) pauseBtn.hidden = !showPause;
       requestAnimationFrame(loop);
     }
     requestAnimationFrame(loop);
@@ -2194,9 +2229,11 @@
       state.paused = p;
       // 押したまま止めると pointerup が来ないことがある。再開した瞬間に
       // その向きへ走り出さないよう、止めるときに入力を捨てる
-      if (p) { for (const k in input) input[k] = false; joyEnd(); document.querySelectorAll(".pad button.on").forEach((b) => b.classList.remove("on")); }
+      if (p) { for (const k in input) input[k] = false; joyEnd(); document.querySelectorAll(".pad button[data-key].on").forEach((b) => b.classList.remove("on")); }
       if (p) BGM.stop(); else if (state.phase === "play") BGM.start();
       setIcon(pauseBtn, p ? "play" : "pause");
+      pauseBtn.classList.toggle("paused", p);
+      pauseBtn.setAttribute("aria-label", p ? "再開" : "一時停止");
     }
 
     const KEYMAP = {
