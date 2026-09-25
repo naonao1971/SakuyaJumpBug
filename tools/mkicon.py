@@ -7,11 +7,14 @@
   - 中身は1つのシルエットを、マゼンタで塗りつぶし・金で縁取り・マゼンタの淡い光
 使う色は咲耶スクランブルのアイコンと同じ3色(地・金・マゼンタ)だけ。
 
-シルエットは 🚙 型の箱形の車の屋根に ⌐◨-◨ が乗った形。
+形は「跳ね上がる⌐◨-◨カー」。屋根に ⌐◨-◨ を乗せた🚙型の車が機首を上げて跳び、
+後ろに金の点で跳ねた軌跡を描く。横向きの車を水平に置いただけでは咲耶Nounラリー
+(ピンクのセダン)と見分けがつかなかったので、「跳ねている」ことで区別する。
   - ◨ の黒い半分(瞳)は地の色で抜き、1色でもメガネに見えるようにする
-  - タイヤは車体からすき間(くり抜き)で切り離し、車だと一目で分かるようにする
+  - タイヤは車体からすき間で切り離し、車だと一目で分かるようにする
 形は180px基準の座標で書き、8倍で描いてから縮める(32pxも同じ形を縮めて作る)。
 """
+import math
 import sys
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFilter
@@ -24,35 +27,56 @@ FILL = (0xFF, 0x2D, 0x9B)     # マゼンタ: 塗りつぶし
 SS = 8                        # スーパーサンプリング
 
 
+TILT = math.radians(-20)      # 機首上げの角度
+PIVOT = (100, 84)             # 回転の中心(180px基準)
+OFFSET = (-6, 8)              # 傾けたあとに枠の中央へ寄せる量
+
+
+def rot(pts):
+    c, s_ = math.cos(TILT), math.sin(TILT)
+    cx, cy = PIVOT
+    ox, oy = OFFSET
+    return [(cx + (x - cx) * c - (y - cy) * s_ + ox, cy + (x - cx) * s_ + (y - cy) * c + oy) for x, y in pts]
+
+
 def silhouette(S):
-    """塗りつぶす形(白)のマスクと、あとから地の色で抜く穴(◨の瞳)のマスクを返す。
-    瞳を形の一部として抜くと、縁取りの金が穴の中まで回り込んで細いすき間にしか
-    見えなかったので、縁取りを描いたあとで地の色を上から置いて抜く。座標は180px基準"""
+    """塗り(形)・抜き(◨の瞳)・金の点(軌跡)の3枚のマスクを返す。座標は180px基準。
+    瞳を形の一部として抜くと縁取りの金が穴に回り込み細いすき間にしか見えないので、
+    縁取りを描いたあとで地の色を上から置いて抜く"""
     u = S / 180
-    P = lambda pts: [(x * u, y * u) for x, y in pts]
-    R = lambda x0, y0, x1, y1: [x0 * u, y0 * u, x1 * u, y1 * u]
     m = Image.new("L", (S, S), 0)
-    d = ImageDraw.Draw(m)
-    # 車体(横から見た箱形。右が前)
-    d.polygon(P([(26, 124), (26, 90), (36, 76), (110, 76), (128, 94), (152, 98), (158, 108), (158, 124)]), fill=255)
-    # ⌐◨-◨ は屋根から少し浮かせて、かけているメガネとして1つの形に見せる
-    d.rectangle(R(50, 42, 76, 68), fill=255)      # ◨
-    d.rectangle(R(86, 42, 112, 68), fill=255)     # ◨
-    d.rectangle(R(76, 51, 86, 58), fill=255)      # -
-    d.rectangle(R(30, 47, 50, 54), fill=255)      # ⌐ のつる
-    d.rectangle(R(30, 47, 37, 62), fill=255)      # ⌐ の折れ
-    # タイヤ: 車体を丸くくり抜いてから、ひとまわり小さいタイヤを置く
-    for cx in (58, 128):
-        d.ellipse(R(cx - 20, 124 - 20, cx + 20, 124 + 20), fill=0)
-    d.rectangle(R(0, 138, 180, 180), fill=0)
-    for cx in (58, 128):
-        d.ellipse(R(cx - 14, 124 - 14, cx + 14, 124 + 14), fill=255)
     holes = Image.new("L", (S, S), 0)
-    h = ImageDraw.Draw(holes)
-    # ◨ の黒い半分(瞳)。レンズの内側の右半分
-    h.rectangle(R(63, 48, 71, 62), fill=255)
-    h.rectangle(R(99, 48, 107, 62), fill=255)
-    return m, holes
+    dots = Image.new("L", (S, S), 0)
+    d, h, g = ImageDraw.Draw(m), ImageDraw.Draw(holes), ImageDraw.Draw(dots)
+    poly = lambda draw, pts, v=255: draw.polygon([(x * u, y * u) for x, y in rot(pts)], fill=v)
+    box = lambda x0, y0, x1, y1: [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
+
+    # 車体(横から見た箱形。右が前)
+    poly(d, [(50, 102), (50, 76), (59, 64), (118, 64), (133, 79), (153, 82), (158, 92), (158, 102)])
+    # ⌐◨-◨ を屋根から少し浮かせて乗せる
+    poly(d, box(68, 38, 92, 60))          # ◨
+    poly(d, box(100, 38, 124, 60))        # ◨
+    poly(d, box(92, 45, 100, 52))         # -
+    poly(d, box(52, 42, 68, 49))          # ⌐ のつる
+    poly(d, box(52, 42, 59, 56))          # ⌐ の折れ
+    poly(h, box(80, 44, 87, 55))          # 瞳
+    poly(h, box(112, 44, 119, 55))
+    # タイヤ: 車体を丸くくり抜いてから、ひとまわり小さいタイヤを置く
+    wheels = rot([(74, 103), (136, 103)])
+    for x, y in wheels:
+        d.ellipse([(x - 18) * u, (y - 18) * u, (x + 18) * u, (y + 18) * u], fill=0)
+    for x, y in wheels:
+        d.ellipse([(x - 13) * u, (y - 13) * u, (x + 13) * u, (y + 13) * u], fill=255)
+
+    # 跳ねた軌跡: 地面から後ろのタイヤへ向かう点の列と、踏み切った地面
+    for i in range(4):
+        t = i / 4
+        x = 24 + t * 40
+        y = 152 - math.sin(t * math.pi * 0.55) * 40
+        r = 3.6 + t * 1.2
+        g.ellipse([(x - r) * u, (y - r) * u, (x + r) * u, (y + r) * u], fill=255)
+    g.rectangle([14 * u, 155 * u, 58 * u, 159 * u], fill=255)
+    return m, holes, dots
 
 
 def icon(size):
@@ -60,7 +84,7 @@ def icon(size):
     u = S / 180
     im = Image.new("RGB", (S, S), BG)
 
-    mask, holes = silhouette(S)
+    mask, holes, dots = silhouette(S)
     # 形を r px 太らせる(膨張)。BoxBlur で近くに白がある画素を拾い、しきい値で2値に戻す
     grow = lambda r: mask.filter(ImageFilter.BoxBlur(max(1, round(r * u)))).point(lambda v: 255 if v > 6 else 0)
     outline = grow(3)                                  # 金の縁取りの太さ(180px基準で約3px)
@@ -70,6 +94,7 @@ def icon(size):
     im.paste(Image.new("RGB", (S, S), GOLD), (0, 0), outline)
     im.paste(Image.new("RGB", (S, S), FILL), (0, 0), mask)
     im.paste(Image.new("RGB", (S, S), BG), (0, 0), holes)
+    im.paste(Image.new("RGB", (S, S), GOLD), (0, 0), dots)
 
     d = ImageDraw.Draw(im)
     d.rectangle([0, 0, S - 1, S - 1], outline=GOLD, width=round(7 * u))
