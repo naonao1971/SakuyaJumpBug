@@ -210,6 +210,17 @@
     .pause-button[hidden] { display: none; }
     @media (hover: hover) { .pause-button:hover { opacity: 0.6; } .pause-button.paused:hover { opacity: 0.95; } }
 
+    body.cutscene .pad, body.cutscene #joyhint, body.cutscene #joyhintcap { visibility: hidden; }
+    .cutscene-video {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
     .share {
       position: absolute;
       left: 50%;
@@ -398,6 +409,12 @@
     <!-- 一時停止。咲耶スクランブルと同じく画面の真ん中に薄く置き、止めている間だけはっきり出す -->
     <button id="btnPause" class="pause-button" type="button" aria-label="一時停止" data-icon="pause" hidden></button>
     <button id="btnShare" class="share" type="button" hidden>𝕏 でシェア</button>
+    <!-- ゲームオーバー/クリアの演出動画(咲耶スクランブルと同じ作り)。canvas へ drawImage で
+         描くだけなので画面には出さないが、display:none だと描画が止まる環境があるため
+         1px に畳んで見えなくするに留める。preload="none": 最後まで遊ばない人に通信を
+         強いないよう、読み込みはスタートを押したとき(unlockCutsceneVideos)まで遅らせる -->
+    <video id="clearVideo" class="cutscene-video" playsinline preload="none" aria-hidden="true"></video>
+    <video id="gameOverVideo" class="cutscene-video" playsinline preload="none" aria-hidden="true"></video>
   </div>
 
   <section id="rank" aria-label="ランキング TOP10" hidden>
@@ -1344,7 +1361,8 @@
         state.phase = "goal";
         state.timer = 150;
         BGM.stop();
-        SFX.clear();
+        // 演出動画が流せるなら、ファンファーレは動画の音に任せる(二重に鳴らさない)
+        if (!clearVideo.canPlayThrough()) SFX.clear();
         burst(level.goalX, GROUND_Y - 140, C.gold, 40, 6, 0.08, 3);
         burst(level.goalX, GROUND_Y - 140, C.magenta, 30, 5, 0.08, 3);
       }
@@ -1377,8 +1395,7 @@
       saveHi();
       state.phase = "clear";
       state.timer = 0;
-      shareBtn.hidden = false;
-      rankOnFinish();
+      beginCutscene(clearVideo, () => {});   // ファンファーレはゴールの瞬間に鳴らしてある
     }
 
     function saveHi() {
@@ -1408,9 +1425,7 @@
             state.phase = "over";
             state.timer = 0;
             saveHi();
-            SFX.over();
-            shareBtn.hidden = false;
-            rankOnFinish();
+            beginCutscene(gameOverVideo, () => SFX.over());
           }
         }
       } else if (state.phase === "goal") {
@@ -2238,8 +2253,11 @@
       ctx.restore();
       drawHud();
       drawToast();
-      if (state.phase === "clear") drawResult("STAGE CLEAR!", C.gold);
-      if (state.phase === "over") drawResult("GAME OVER", C.danger);
+      if (cutscene) drawCutscene();
+      else {
+        if (state.phase === "clear") drawResult("STAGE CLEAR!", C.gold);
+        if (state.phase === "over") drawResult("GAME OVER", C.danger);
+      }
       if (state.paused) {
         // 真ん中には再開ボタンがあるので、文字はその上に出す
         panel(W / 2 - 120, H / 2 - 130, 240, 70);
@@ -2276,6 +2294,8 @@
       const showPause = state.phase === "play" || state.phase === "dying" || state.phase === "goal";
       if (pauseBtn.hidden === showPause) pauseBtn.hidden = !showPause;
       updateRankVisible();
+      // 演出動画の間は操作ボタンを隠す(動画の上にボタンが重ならないように)
+      if (document.body.classList.contains("cutscene") !== !!cutscene) document.body.classList.toggle("cutscene", !!cutscene);
       requestAnimationFrame(loop);
     }
     requestAnimationFrame(loop);
@@ -2326,10 +2346,13 @@
     const pauseBtn = document.getElementById("btnPause");
 
     function canRestart() {
+      if (cutscene) return false;
       return state.phase === "title" || ((state.phase === "over" || state.phase === "clear") && state.timer > 60);
     }
     async function startOrRestart() {
       if (!canRestart()) return;
+      // 動画もユーザー操作の中でしか音付きで流せない(iOS)。解錠は await より前に同期で行う
+      unlockCutsceneVideos();
       await SFX.unlock();
       resetGame();
       BGM.start();
@@ -2364,6 +2387,8 @@
     };
     window.addEventListener("keydown", (e) => {
       if (typingInField(e)) return;
+      // 演出動画はいつでも飛ばせる。飛ばしたキーでそのまま再スタートまで進まないよう、ここで止める
+      if (cutscene && !e.repeat) { e.preventDefault(); endCutscene(); return; }
       const k = KEYMAP[e.code];
       if (k) { input[k] = true; e.preventDefault(); }
       if ((e.code === "Space" || e.code === "Enter") && !e.repeat) startOrRestart();
@@ -2493,6 +2518,7 @@
       joyHintUpdate();
     }
     canvas.addEventListener("pointerdown", (e) => {
+      if (cutscene) { endCutscene(); return; }
       if (state.paused) { setPaused(false); return; }
       const r = canvas.getBoundingClientRect();
       const leftHalf = e.clientX < r.left + r.width / 2;
@@ -2547,6 +2573,7 @@
     function toggleMute() {
       SFX.unlock();
       SFX.setMuted(!SFX.muted);
+      syncCutsceneVideoMute();   // 再生中の演出動画にも即座に反映する
       setIcon(muteBtn, SFX.muted ? "mute" : "sound");
       muteBtn.setAttribute("aria-label", SFX.muted ? "音をオン" : "音をオフ");
     }
@@ -2709,6 +2736,118 @@
         shareBtn.disabled = false;
       }
     });
+
+    // ------------------------------------------------------------------
+    // ゲームオーバー/クリアの演出動画(咲耶スクランブルと同じ作り)
+    //  - 1回だけ流し、流し終えたら(または飛ばしたら)結果画面を出す
+    //  - タップ/キーでいつでも飛ばせる
+    //  - 読み込みが間に合っていない・再生できないときは挟まず、従来どおり
+    //    ジングルを鳴らしてすぐ結果画面を出す
+    //  - ランキングの登録フォームとシェアボタンは、結果画面が出てから出す
+    // ------------------------------------------------------------------
+    function createCutsceneVideo(el, src) {
+      let failed = false;
+      let unlocked = false;
+      let playing = false;
+      el.loop = false;
+      el.addEventListener("error", () => { failed = true; playing = false; });
+      el.addEventListener("ended", () => { playing = false; });
+      return {
+        el,
+        // iOS はユーザー操作を経ていない動画の音声再生を拒むので、スタートのタップで
+        // 一度無音で再生→即停止して解錠しておく。読み込みもここから始まる
+        unlock() {
+          if (unlocked) return;
+          unlocked = true;
+          if (!el.src) el.src = src;
+          el.muted = true;
+          const p = el.play();
+          if (p && p.then) p.then(() => { el.pause(); el.currentTime = 0; }).catch(() => {});
+        },
+        // 音付きで流し、拒否されたら無音で映像だけ出して音はジングルで補う。
+        // 効果音オフの間は動画の音も鳴らさない
+        play(fallbackSfx) {
+          if (failed || !el.src) { playing = false; fallbackSfx(); return; }
+          try { el.currentTime = 0; } catch (e) { /* 未読み込みなら無視 */ }
+          el.muted = SFX.muted;
+          playing = true;
+          const p = el.play();
+          if (p && p.catch) {
+            p.catch(() => {
+              el.muted = true;
+              const q = el.play();
+              if (q && q.catch) q.catch(() => { failed = true; playing = false; });
+              fallbackSfx();
+            });
+          }
+        },
+        stop() {
+          playing = false;
+          el.pause();
+          try { el.currentTime = 0; } catch (e) { /* 未読み込みなら無視 */ }
+        },
+        hasFrame() { return !failed && el.readyState >= 2 && el.videoWidth > 0; },
+        // 途切れずに流し切れる見込みがあるか。1回きりの演出なので、間に合わないなら挟まない
+        canPlayThrough() { return !failed && el.readyState >= 3 && el.videoWidth > 0; },
+        isPlaying() { return playing; },
+        syncMuted() { el.muted = SFX.muted; }
+      };
+    }
+    const clearVideo = createCutsceneVideo(document.getElementById("clearVideo"), "assets/clear.mp4");
+    const gameOverVideo = createCutsceneVideo(document.getElementById("gameOverVideo"), "assets/gameover.mp4");
+    function unlockCutsceneVideos() { clearVideo.unlock(); gameOverVideo.unlock(); }
+    function syncCutsceneVideoMute() { clearVideo.syncMuted(); gameOverVideo.syncMuted(); }
+
+    let cutscene = null;   // 流している演出動画(無ければ null)
+
+    function beginCutscene(video, fallbackSfx) {
+      if (!video.canPlayThrough()) { fallbackSfx(); showResultsUI(); return; }
+      cutscene = video;
+      video.play(fallbackSfx);
+    }
+    function endCutscene() {
+      if (!cutscene) return;
+      const v = cutscene;
+      cutscene = null;
+      v.stop();
+      state.timer = 0;       // 結果画面が出てから1秒は再スタートを受け付けない(誤タップよけ)
+      showResultsUI();
+    }
+    // 流し終えたら自動で結果画面へ。再生に失敗して止まった場合も同じ
+    clearVideo.el.addEventListener("ended", () => { if (cutscene === clearVideo) endCutscene(); });
+    gameOverVideo.el.addEventListener("ended", () => { if (cutscene === gameOverVideo) endCutscene(); });
+    clearVideo.el.addEventListener("error", () => { if (cutscene === clearVideo) endCutscene(); });
+    gameOverVideo.el.addEventListener("error", () => { if (cutscene === gameOverVideo) endCutscene(); });
+
+    // 結果画面のボタン類(シェア・ランキング登録)。演出の後に出す
+    function showResultsUI() {
+      shareBtn.hidden = false;
+      rankOnFinish();
+    }
+
+    // 演出中の画面。ゲーム画面を暗く沈め、動画を金の枠で囲んで中央に大きく出す
+    function drawCutscene() {
+      ctx.fillStyle = "rgba(0, 0, 0, 0.78)";
+      ctx.fillRect(0, 0, W, H);
+      const v = cutscene.el;
+      if (cutscene.hasFrame()) {
+        const vw = 800;
+        const vh = vw * (v.videoHeight / v.videoWidth);
+        const vx = (W - vw) / 2;
+        const vy = (H - vh) / 2 - 8;
+        ctx.drawImage(v, vx, vy, vw, vh);
+        ctx.strokeStyle = C.gold;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(vx + 1, vy + 1, vw - 2, vh - 2);
+        if (blinkOn()) {
+          ctx.textAlign = "center";
+          ctx.font = C.font(9);
+          ctx.fillStyle = C.dim;
+          ctx.fillText(isTouch ? "TAP TO SKIP" : "PRESS ANY KEY TO SKIP", W / 2, vy + vh + 22);
+          ctx.textAlign = "left";
+        }
+      }
+    }
 
     // ------------------------------------------------------------------
     // ランキング(咲耶Nounラリーと同じ作り)
@@ -2890,7 +3029,7 @@
     // だけでスクロールしてゲーム画面が切れる。タイトル画面と結果画面でだけ出す
     function updateRankVisible() {
       if (!GAS_URL) return;
-      const hide = state.phase === "play" || state.phase === "dying" || state.phase === "goal";
+      const hide = state.phase === "play" || state.phase === "dying" || state.phase === "goal" || !!cutscene;
       if (rankEl.hidden !== hide) rankEl.hidden = hide;
     }
 
