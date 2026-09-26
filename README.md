@@ -8,7 +8,8 @@
 CNPを拾いながらゴールの鳥居を目指す。公開URLは `https://jumpbug.naoblock.jp/`（GitHub Pages。独自ドメインは `CNAME` で指定）。
 姉妹作: [咲耶スクランブル](https://sakuya.naoblock.jp/) / [咲耶Nounラリー](https://rally.naoblock.jp/)
 
-- 単一ファイル（`index.html`）。画像は `assets/cnp/*.png`（CNP 11体）と `assets/sakuya_pilot.png`（咲耶の表情5コマ）。
+- 単一ファイル（`index.html`）。共通部分は [sakuya-kit](https://github.com/naonao1971/sakuya-kit)（`@0.2.0` に固定）を jsDelivr から読み込む。
+  CNP 11体の絵は kit の正典を使う。このリポジトリの画像は `assets/sakuya_pilot.png`（咲耶の表情5コマ）と演出動画・タイトル画。
   どちらも咲耶スクランブルから複製したもの
 - `assets/gameover.mp4` / `assets/clear.mp4`（各6秒・音付き）はゲームオーバー/ゴールの演出動画。咲耶スクランブルと同じ作りで、
   スタートを押したときに読み込み始め、結果画面の前に1回だけ流す。タップ/キーで飛ばせる。
@@ -83,25 +84,19 @@ python3 tools/mkicon.py apple-touch-icon.png favicon-32.png
 
 Claude のアーティファクト（試遊版）では共有シートを呼べないので、文章だけの投稿リンクにしてある。
 
+## sakuya-kit との分担
+
+咲耶スクランブル・咲耶Nounラリーと同じく、共通部分は sakuya-kit が受け持つ。
+
+- kit: スタート・一時停止・縦持ち案内・全画面、スティック（左右で前後／上でジャンプ）・画面右半分のジャンプ・ボタン、
+  バルカンの自動連射（タップで切り替え・押し続けて撃つ・V キー）、音の切り替え（M）、演出動画と結果画面、
+  ハイスコア（旧版の `sakuyaJumpBugHi` を引き継ぐ）、ランキング登録・TOP10・総合ランキング、シェア、60Hz ループ
+- このゲーム: コース・車の物理・敵・HUD（スコアとロスターは kit の部品）・効果音と BGM・シェアカードの絵
+- 結果画面には `resultScreen.decorate` でボーナスの内訳・到達ゾーン・救出した CNP を足している
+- タイトル・OGP・アイコン・manifest.json は kit の `tools/ogp.html` の手順で作った（`ogp.png` は `assets/title.jpg` から）
+
 ## ランキング（ハイスコア登録）
 
-咲耶Nounラリーと同じ作り。記録は Google スプレッドシート「score3」に、Google Apps Script
-（`apps-script.gs`）のウェブアプリ経由で読み書きする。
-
-- ゲームの下に TOP10 を普通のページ要素として置く（横持ち・縦持ち・PC のどれでも見られる）。
-  遊んでいる間は畳み、タイトル画面と結果画面でだけ出す
-- ゲームオーバー / ゴールのとき、TOP10 に入る点数なら名前の登録フォームを出し、2秒後にそこまで自動で送る
-- X の ID は任意。`unavatar.io` のアイコンが読めるかで実在を確かめ、確かめられるまで登録できない
-- 列: スコア / ニックネーム / X ID / 登録日時 / 端末 / 進行度（0〜100%）/ 回収CNP / クリア
-- 改ざん対策としてサーバー側で 60,000 点を上限に切り詰める（ミスなしの理論値は約 28,000 点）
-- `index.html` の `GAS_URL` が空の間はランキングの枠ごと出さない
-- 稼働中の GAS（score3 に紐づくウェブアプリ）の URL は `index.html` の `GAS_URL` に設定済み
-
-### セットアップ
-
-1. スプレッドシート「score3」を開き、拡張機能 → Apps Script に `apps-script.gs` を貼り付けて保存
-2. デプロイ → 新しいデプロイ → 種類「ウェブアプリ」（実行するユーザー: 自分 / アクセスできるユーザー: 全員）
-3. 発行された URL（`https://script.google.com/macros/s/…/exec`）を `index.html` の `GAS_URL` に入れる
-
-シート（`ranking`）と見出し行はスクリプトが自動で作る。姉妹作のスプレッドシートや GAS とは共用しないこと
-（再デプロイしたときに稼働中の姉妹作のランキングまで巻き込む）。
+咲耶シリーズ共通の GAS（sakuya-kit の `gas/apps-script.gs`）の `jumpbug` シートに読み書きする。
+旧スプレッドシート「score3」の記録は取り込み済み。このリポジトリの `apps-script.gs` は旧版で、もう使っていない。
+スコア上限は GAS の `_games` シートと `index.html` の `maxScore` で 60,000 点（ミスなしの理論値は約 28,000 点）。
