@@ -2857,7 +2857,10 @@
     // GAS(Google Apps Script)のウェブアプリに JSON で読み書きする(apps-script.gs)。
     // GAS_URL が空の間は枠ごと出さない ― デプロイ後にこの1行を差し替えれば動く
     // ------------------------------------------------------------------
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbyzPxMyeEhWXhm9DjVtRZkTL_gNgMlYcfoYodAts1uOYPrysRvdW9rSzWqqc3yAe6pX/exec";
+    // 咲耶シリーズ共通のランキング（sakuya-kit/gas/apps-script.gs）。?game=jumpbug でこのタイトルの
+    // シートを読み書きし、他のタイトルと合わせた総合ランキングにも載る。旧スプレッドシート(score3)の
+    // 記録は共通のスプレッドシートへ取り込み済み
+    const GAS_URL = "https://script.google.com/macros/s/AKfycby-UoKAfHw4eBULVb37tQzwPEhNm65B_HUktd9Sh0ZxMdOdmnRHdub0NeeXUCAqg8bG/exec?game=jumpbug";
 
     const rankEl = document.getElementById("rank");
     const rankList = document.getElementById("ranklist");
