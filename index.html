@@ -239,20 +239,22 @@
 
     /* 縦持ちの案内。画面全体を覆う position:fixed にすると、下に置いたランキングへ
        スクロールで辿り着けない(咲耶Nounラリーで起きた)。流れの中の一区画にして、
-       縦持ちの間はゲーム側を隠す。最初の一画面ぶんの高さは確保する */
+       縦持ちの間はゲーム側を隠す。
+       上に詰めて置き、高さは中身ぶんだけにする。一画面ぶんの高さを取って真ん中に
+       寄せると、下のランキングがスクロールしないと見えなかった */
     .orient {
       display: none;
       width: 100%;
-      min-height: 100dvh;
       box-sizing: border-box;
       background: var(--bg);
       color: var(--ink);
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       gap: 10px;
       text-align: center;
-      padding: 16px;
+      /* ホーム画面から開いたときにステータスバーの下へ潜らないよう、上は safe-area ぶん空ける */
+      padding: max(24px, calc(env(safe-area-inset-top, 0px) + 12px)) 16px 8px;
     }
     .orient .t { font-family: var(--font-display); color: var(--gold); font-size: 16px; margin: 0; }
     .orient .s { font-family: var(--font-display); color: var(--magenta); font-size: 10px; margin: 0; }
@@ -267,6 +269,7 @@
     @media (orientation: portrait) {
       body.touch .orient { display: flex; }
       body.touch .wrap { display: none; }
+      body.touch { justify-content: flex-start; }
     }
 
     /* --- ランキング(咲耶Nounラリーと同じ作り) ---
