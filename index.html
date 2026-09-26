@@ -1,502 +1,173 @@
 <!doctype html>
 <html lang="ja">
 <head>
+  <!-- この <head> は sakuya-kit の tools/ogp.html が書き出す共通の形。値を変えるときもツールで作り直す -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#06070C" />
+  <!-- ホーム画面に追加したとき、Safari のバーなしの全画面で起動する -->
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="咲耶ジャンプバグ" />
   <title>SAKUYA JUMP BUG ─ ⌐◨-◨ CAR</title>
+  <meta name="description" content="⌐◨-◨カーで跳ねながら城下町・洞窟・天守を抜け、CNP11体を拾ってゴールの鳥居を目指す横スクロールゲーム" />
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="manifest" href="manifest.json" />
+  <!-- OGP / Twitter Card（クローラは JavaScript を実行しないので、ここに静的に書く） -->
   <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="SAKUYA SERIES" />
   <meta property="og:title" content="SAKUYA JUMP BUG ─ ⌐◨-◨ CAR" />
-  <meta property="og:url" content="https://jumpbug.naoblock.jp/" />
   <meta property="og:description" content="⌐◨-◨カーで跳ねながら城下町・洞窟・天守を抜け、CNP11体を拾ってゴールの鳥居を目指す横スクロールゲーム" />
-  <meta property="og:image" content="https://jumpbug.naoblock.jp/assets/title.jpg" />
+  <meta property="og:url" content="https://jumpbug.naoblock.jp/" />
+  <meta property="og:image" content="https://jumpbug.naoblock.jp/ogp.png" />
   <meta property="og:image:width" content="1200" />
-  <meta property="og:image:height" content="629" />
+  <meta property="og:image:height" content="630" />
   <meta property="og:locale" content="ja_JP" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="SAKUYA JUMP BUG ─ ⌐◨-◨ CAR" />
   <meta name="twitter:description" content="⌐◨-◨カーで跳ねながら城下町・洞窟・天守を抜け、CNP11体を拾ってゴールの鳥居を目指す横スクロールゲーム" />
-  <meta name="twitter:image" content="https://jumpbug.naoblock.jp/assets/title.jpg" />
-  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
-  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-  <link rel="manifest" href="manifest.json" />
-  <!-- 本家「咲耶スクランブル」と同じ書体。display=欧文/数字、body=和文 -->
+  <meta name="twitter:image" content="https://jumpbug.naoblock.jp/ogp.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.2.0/kit.css" />
   <style>
-    :root {
-      color-scheme: dark;
-      /* 本家のトークンをそのまま継ぐ。漆黒・金・マゼンタの3色で世界観を作る */
-      --bg: #06070C;
-      --panel: #120E1F;
-      --panel-ghost: rgba(18, 14, 31, 0.45);
-      --ink: #E8ECF5;
-      --dim: #7C8BA6;
-      --gold: #E8C56A;
-      --magenta: #FF2D9B;
-      --danger: #FF4D2E;
-      --edge-lit: #39445A;
-      --edge-lo: #05060A;
-      --bevel-up: inset 2px 2px 0 var(--edge-lit), inset -2px -2px 0 var(--edge-lo);
-      --bevel-down: inset 2px 2px 0 var(--edge-lo), inset -2px -2px 0 var(--edge-lit);
-      --font-display: "Press Start 2P", "DotGothic16", monospace;
-      --font-body: "DotGothic16", "Press Start 2P", monospace;
-    }
-    html, body { overscroll-behavior: none; }
-    body {
-      margin: 0;
-      min-height: 100dvh;
-      background: var(--bg);
-      color: var(--ink);
-      font-family: var(--font-body);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 14px;
-      padding: 16px 16px 32px;
+    /* 色・部品の寸法・配置は kit のまま（ジャンプバグは kit の既定色と同じ） */
+    /* 遊び方。canvas の下、ランキングの前に置く */
+    .jb-how {
+      width: min(92vw, 720px);
       box-sizing: border-box;
-      touch-action: manipulation;
-      -webkit-user-select: none;
-      user-select: none;
-      -webkit-touch-callout: none;
-      -webkit-tap-highlight-color: transparent;
-    }
-    /* 16:9 を保ったまま、横幅と高さのどちらにも収まる最大サイズにする */
-    .wrap {
-      position: relative;
-      width: min(100%, 960px, calc((100dvh - 32px) * 16 / 9));
-      aspect-ratio: 16 / 9;
-      border: 2px solid rgba(232, 197, 106, 0.45);
-      box-sizing: content-box;
-      background: #000;
-    }
-    canvas {
-      display: block;
-      width: 100%;
-      height: 100%;
-      image-rendering: pixelated;
-      touch-action: none;
-    }
-    /* 右上の小ボタン(ミュート/一時停止)。canvasの上に重ねる */
-    .sys {
-      position: absolute;
-      top: 6px;
-      right: 6px;
-      display: flex;
-      flex-direction: column;   /* 横に並べると燃料バーに重なるので縦に積む */
-      gap: 6px;
-    }
-    .sys button, .pad button {
-      font-family: var(--font-display);
       color: var(--ink);
-      background: var(--panel-ghost);
-      border: 0;
-      border-radius: 0;
-      box-shadow: var(--bevel-up);
-      cursor: pointer;
-      touch-action: none;
-    }
-    .sys button { width: 34px; height: 34px; }
-    /* ボタンの中身はすべてドット絵のアイコン(ICONS)。文字は使わない */
-    .sys button, .pad button { display: grid; place-items: center; padding: 0; }
-    .sys button svg { width: 20px; height: 20px; }
-    .pad button svg { width: 52%; height: 52%; }
-    svg.icon { display: block; shape-rendering: crispEdges; fill: currentColor; }
-    .sys button:active, .sys button.on, .pad button.on { box-shadow: var(--bevel-down); background: rgba(255, 45, 155, 0.35); }
-
-    /* タッチ操作。タッチ端末でだけ出す(body.touch)。
-       左手=バーチャルスティック、右手=ショット/ジャンプ。半透明で下の地形を透かす */
-    .pad { display: none; }
-    body.touch .pad {
-      position: absolute;
-      /* 下端ぎりぎりに置くと、端末や埋め込み表示によっては画面の外や
-         ツールバーの裏に隠れる。少し持ち上げて親指の自然な位置に置く */
-      bottom: 14%;
-      display: flex;
-      gap: 10px;
-    }
-    .pad.right { right: 8px; align-items: flex-end; }
-    /* バルカンと JUMP は同じ大きさにそろえる */
-    .pad button {
-      width: clamp(52px, 17vh, 76px);
-      height: clamp(52px, 17vh, 76px);
-    }
-    .pad button.jump { color: var(--magenta); }
-    .pad.right { align-items: center; }
-    /* バルカン(ショット)ボタン。自動連射の切り替えと手動の発射を1つにまとめる。
-       自動連射がオンの間はマゼンタで縁取り、オフのときは少し薄くする */
-    .pad button.vulcan { color: var(--gold); opacity: 0.6; }
-    .pad button.vulcan.on { opacity: 1; box-shadow: var(--bevel-up), 0 0 0 2px var(--magenta); }
-    .pad button.vulcan.firing { box-shadow: var(--bevel-down); background: rgba(232, 197, 106, 0.3); }
-
-    /* スマホ横持ちでは余白を捨てて画面いっぱいに使う */
-    body.touch {
-      padding: 0 env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px);
-      gap: 0;
-      justify-content: center;
-    }
-    body.touch .wrap { width: min(100vw, calc(100dvh * 16 / 9)); border: 0; }
-    body.touch .info, body.touch footer { display: none; }
-
-    /* バーチャルスティック。見た目と寸法は咲耶Nounラリーに揃える */
-    #joyring, #joyknob { position: fixed; pointer-events: none; display: none; border-radius: 50%; }
-    #joyring {
-      z-index: 30; width: 64px; height: 64px; margin: -32px 0 0 -32px;
-      border: 2px solid rgba(232, 236, 245, 0.30); background: rgba(18, 14, 31, 0.30);
-    }
-    #joyknob {
-      z-index: 31; width: 30px; height: 30px; margin: -15px 0 0 -15px;
-      background: var(--magenta); opacity: 0.85; box-shadow: 0 0 0 2px rgba(232, 236, 245, 0.35);
-    }
-    #joyring.on, #joyknob.on { display: block; }
-    /* 指の置き場所を教える影。最初に倒すまでの間だけ、左下で拍動させる。
-       影だけだと「左下を押すもの」と誤解されるので、本当の決まりを文字で添える */
-    #joyhint {
-      position: absolute; z-index: 29; pointer-events: none; display: none;
-      left: 12%; bottom: 22%; width: 64px; height: 64px; margin: 0 0 -32px -32px; border-radius: 50%;
-      border: 2px dashed rgba(232, 236, 245, 0.28); background: rgba(18, 14, 31, 0.28);
-      animation: joypulse 1.8s ease-in-out infinite;
-    }
-    #joyhint::after {
-      content: ""; position: absolute; left: 50%; top: 50%;
-      width: 28px; height: 28px; margin: -14px 0 0 -14px; border-radius: 50%;
-      background: rgba(232, 236, 245, 0.20);
-    }
-    #joyhintcap {
-      position: absolute; z-index: 29; pointer-events: none; display: none;
-      left: 12px; bottom: calc(22% + 44px); white-space: nowrap;
-      font: 12px/1.3 var(--font-body); letter-spacing: 0.04em;
-      color: rgba(232, 236, 245, 0.7); text-shadow: 0 1px 3px #000, 0 0 6px #000;
-    }
-    body.joyhint #joyhint, body.joyhint #joyhintcap { display: block; }
-    @keyframes joypulse {
-      0%, 100% { opacity: 0.55; transform: scale(1); }
-      50% { opacity: 1; transform: scale(1.10); }
-    }
-    @media (prefers-reduced-motion: reduce) { #joyhint { animation: none; opacity: 0.8; } }
-
-    /* 一時停止ボタン(咲耶スクランブルと同じ見た目・位置)。canvas は .wrap をぴったり
-       埋めているので、CSS の 50% がそのまま画面の中心になる。
-       プレイ中は 0.1 まで薄くして邪魔にならないようにし、止めている間だけはっきり出す */
-    .pause-button {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 7;
-      width: 56px;
-      height: 56px;
-      display: grid;
-      place-items: center;
-      padding: 0;
-      border: 2px solid var(--edge-lit);
-      border-radius: 0;
-      background: var(--panel);
-      color: var(--ink);
-      opacity: 0.1;
-      box-shadow: var(--bevel-up);
-      cursor: pointer;
-      touch-action: manipulation;
-      transition: opacity 0.15s ease;
-    }
-    .pause-button svg { width: 26px; height: 26px; }
-    .pause-button:active { box-shadow: var(--bevel-down); transform: translate(-50%, -50%) translateY(2px); }
-    .pause-button.paused { opacity: 0.95; }
-    .pause-button[hidden] { display: none; }
-    @media (hover: hover) { .pause-button:hover { opacity: 0.6; } .pause-button.paused:hover { opacity: 0.95; } }
-
-    body.cutscene .pad, body.cutscene #joyhint, body.cutscene #joyhintcap { visibility: hidden; }
-    .cutscene-video {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 1px;
-      height: 1px;
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .share {
-      position: absolute;
-      left: 50%;
-      bottom: 10%;
-      transform: translateX(-50%);
-      font-family: var(--font-display);
-      font-size: 12px;
-      color: var(--ink);
-      background: var(--panel);
-      border: 0;
-      box-shadow: var(--bevel-up), 0 0 0 2px var(--gold);
-      padding: 10px 16px;
-      cursor: pointer;
-    }
-    .share[hidden] { display: none; }
-
-    /* 縦持ちの案内。画面全体を覆う position:fixed にすると、下に置いたランキングへ
-       スクロールで辿り着けない(咲耶Nounラリーで起きた)。流れの中の一区画にして、
-       縦持ちの間はゲーム側を隠す。
-       上に詰めて置き、高さは中身ぶんだけにする。一画面ぶんの高さを取って真ん中に
-       寄せると、下のランキングがスクロールしないと見えなかった */
-    .orient {
-      display: none;
-      width: 100%;
-      box-sizing: border-box;
-      background: var(--bg);
-      color: var(--ink);
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      gap: 10px;
-      text-align: center;
-      /* ホーム画面から開いたときにステータスバーの下へ潜らないよう、上は safe-area ぶん空ける */
-      padding: max(24px, calc(env(safe-area-inset-top, 0px) + 12px)) 16px 8px;
-    }
-    .orient .t { font-family: var(--font-display); color: var(--gold); font-size: 16px; margin: 0; }
-    .orient .s { font-family: var(--font-display); color: var(--magenta); font-size: 10px; margin: 0; }
-    .orient .i { font-size: 40px; }
-    /* 縦持ちの案内に出すタイトル画。OGP と同じ絵。琥珀のヘアラインで筐体のモニタ枠に見せる */
-    .orient .art {
-      display: block;
-      width: min(100%, 520px);
-      height: auto;
-      border: 2px solid rgba(232, 197, 106, 0.55);
-    }
-    @media (orientation: portrait) {
-      body.touch .orient { display: flex; }
-      body.touch .wrap { display: none; }
-      body.touch { justify-content: flex-start; }
-    }
-
-    /* --- ランキング(咲耶Nounラリーと同じ作り) ---
-       GAS_URL が空の間は JS が hidden のままにする。未設定のまま公開しても、
-       空の枠や通信エラーは見せない。ゲームの下に普通のページ要素として置き、
-       横持ちでも縦持ちでも PC でも見られるようにする */
-    #rank {
-      width: min(100%, 720px);
-      box-sizing: border-box;
-      margin: 18px auto 0;
-      padding: 14px 12px 18px;
-      border-top: 1px solid rgba(232, 197, 106, 0.3);
-    }
-    #rank[hidden] { display: none; }
-    body.touch #rank { padding-inline: 16px; }
-    .rank-title {
-      font-family: var(--font-display);
-      font-size: 13px;
-      letter-spacing: 0.12em;
-      text-align: center;
-      color: var(--gold);
-      margin: 0 0 12px;
-    }
-    #ranklist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-    .rank-row {
-      display: grid;
-      grid-template-columns: 30px 1fr auto auto;
-      align-items: center;
-      gap: 8px;
-      padding: 7px 10px;
-      background: var(--panel);
-      box-shadow: var(--bevel-up);
-      font-size: 13px;
-    }
-    .rank-no { text-align: center; font-family: var(--font-display); font-size: 11px; color: var(--dim); }
-    .rank-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .rank-x { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--dim); }
-    .rank-x img { width: 16px; height: 16px; border-radius: 50%; }
-    .rank-x a { color: inherit; text-decoration: none; }
-    .rank-sc { font-family: var(--font-display); font-size: 12px; color: var(--gold); font-variant-numeric: tabular-nums; }
-    /* 進行度・回収CNP・クリアは2行目に小さく。1行に詰めると狭い画面で崩れる */
-    .rank-sub { grid-column: 2 / -1; font-size: 11px; color: var(--dim); letter-spacing: 0.04em; }
-    .rank-empty { text-align: center; font-size: 12px; color: var(--dim); padding: 10px; }
-    /* 登録フォーム。TOP10 に入ったときだけ出す */
-    #rankform {
-      display: none;
-      flex-direction: column;
-      gap: 8px;
-      align-items: center;
-      width: min(360px, 100%);
-      box-sizing: border-box;
-      margin: 0 auto 16px;
-      padding: 14px 12px;
-      background: rgba(232, 197, 106, 0.08);
-      border: 1px solid rgba(232, 197, 106, 0.4);
-    }
-    #rankform.show { display: flex; }
-    .rank-msg { margin: 0; font-size: 14px; text-align: center; color: var(--gold); }
-    /* font-size は 16px 未満にしないこと。iOS は 16px 未満の入力欄に
-       フォーカスすると画面を勝手に拡大する */
-    #rankform input {
-      font: inherit;
-      font-size: 16px;
-      width: min(280px, 100%);
-      box-sizing: border-box;
-      padding: 9px 11px;
-      border: 1px solid rgba(232, 236, 245, 0.25);
-      border-radius: 0;
-      background: var(--bg);
-      color: var(--ink);
-      -webkit-user-select: text;
-      user-select: text;
-    }
-    #rankform input::placeholder { color: rgba(232, 236, 245, 0.35); }
-    #rankform input:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
-    #ranksend {
-      font-family: var(--font-display);
-      font-size: 12px;
-      width: min(280px, 100%);
-      padding: 12px;
-      border: 0;
-      border-radius: 0;
-      background: var(--magenta);
-      color: #1A1020;
-      box-shadow: var(--bevel-up);
-      cursor: pointer;
-    }
-    #ranksend:disabled { opacity: 0.4; cursor: default; }
-    #rankxidp { display: none; align-items: center; justify-content: center; gap: 6px; width: min(280px, 100%); font-size: 12px; line-height: 1.5; text-align: center; }
-    #rankxidp.show { display: flex; }
-    #rankxidp.ng { color: #FF9A9A; }
-    #rankxidp.ok { color: #9AE6B4; }
-    #rankxidp img { width: 20px; height: 20px; border-radius: 50%; }
-    #rankstat { margin: 0; font-size: 12px; color: var(--dim); text-align: center; min-height: 1em; }
-
-    .info {
-      max-width: 960px;
-      width: 100%;
-      font-size: 14px;
+      font-size: 12.5px;
       line-height: 1.8;
-      color: var(--dim);
+      opacity: 0.85;
     }
-    .info b { color: var(--ink); font-weight: normal; }
-    .info kbd {
-      font-family: var(--font-display);
-      font-size: 10px;
+    .jb-how summary {
+      cursor: pointer;
       color: var(--gold);
-      border: 1px solid rgba(232, 197, 106, 0.5);
-      padding: 1px 5px;
+      font-family: var(--font-display);
+      font-size: 11px;
+      text-align: center;
+      list-style: none;
     }
-    footer { font-size: 12px; color: var(--dim); text-align: center; }
-    footer a { color: var(--gold); }
+    .jb-how ul { margin: 8px 0 0; padding-left: 1.2em; }
+    .jb-how a { color: var(--gold); }
   </style>
 </head>
 <body>
-  <div class="orient" role="alert">
-    <p class="t">SAKUYA JUMP BUG</p>
-    <p class="s">- ⌐◨-◨ CAR -</p>
-    <img class="art" src="assets/title.jpg" alt="⌐◨-◨カーに乗った咲耶が城下町の屋根を跳び越えるタイトル画" width="1200" height="629" />
-    <div class="i">📱⤾</div>
-    <p>横向きにしてね ⌐◨-◨</p>
-  </div>
-
-  <div id="joyring" aria-hidden="true"></div>
-  <div id="joyknob" aria-hidden="true"></div>
-  <div class="wrap" id="wrap">
+  <!-- 共通UI（スタート・ポーズ・操作ボタン・スティック・ランキング・縦持ち案内・全画面の案内）は
+       sakuya-kit が足す。ここに置くのはゲーム画面の canvas と遊び方だけ -->
+  <div class="sk-wrap">
     <canvas id="game" width="960" height="540" aria-label="咲耶ジャンプバグ ゲーム画面"></canvas>
-    <div class="sys">
-      <button id="btnPad" type="button" aria-label="タッチ操作ボタンの表示切り替え" data-icon="pad"></button>
-      <button id="btnMute" type="button" aria-label="音のオン/オフ" data-icon="sound"></button>
-    </div>
-    <!-- バーチャルスティック(姉妹作「咲耶Nounラリー」と同じ浮動式)。
-         左半分のどこでも、触れた場所に出る -->
-    <div id="joyhint" aria-hidden="true"></div>
-    <div id="joyhintcap" aria-hidden="true">左半分のどこでも押したまま倒す</div>
-    <div class="pad right">
-      <button id="btnVulcan" type="button" class="vulcan" aria-label="バルカン:自動連射オン(タップで切り替え・長押しで撃つ)" data-icon="auto"></button>
-      <button type="button" class="jump" data-key="jump" aria-label="ジャンプ" data-icon="jump"></button>
-    </div>
-    <!-- 一時停止。咲耶スクランブルと同じく画面の真ん中に薄く置き、止めている間だけはっきり出す -->
-    <button id="btnPause" class="pause-button" type="button" aria-label="一時停止" data-icon="pause" hidden></button>
-    <button id="btnShare" class="share" type="button" hidden>𝕏 でシェア</button>
-    <!-- ゲームオーバー/クリアの演出動画(咲耶スクランブルと同じ作り)。canvas へ drawImage で
-         描くだけなので画面には出さないが、display:none だと描画が止まる環境があるため
-         1px に畳んで見えなくするに留める。preload="none": 最後まで遊ばない人に通信を
-         強いないよう、読み込みはスタートを押したとき(unlockCutsceneVideos)まで遅らせる -->
-    <video id="clearVideo" class="cutscene-video" playsinline preload="none" aria-hidden="true"></video>
-    <video id="gameOverVideo" class="cutscene-video" playsinline preload="none" aria-hidden="true"></video>
   </div>
+  <details class="jb-how" id="how">
+    <summary>遊び方</summary>
+    <ul>
+      <li>⌐◨-◨カーは地面や屋根に触れるたび勝手に跳ねる。CNP 11体を拾いながら、ゴールの鳥居を目指せ。</li>
+      <li>画面は一定の速さで勝手に進む（強制スクロール）。→で前へ、←でバック ― 戻ってコインや CNP を取れる。</li>
+      <li>ジャンプは押している間ほど高く跳ぶ。空中でもう2回まで跳べる。</li>
+      <li>敵は撃つか上から踏むと倒せる。溶岩に落ちる・トゲや敵に当たる・燃料切れ・壁と画面の左端にはさまれるとミス。</li>
+      <li>途中の提灯がチェックポイント。20000点ごとに1UP。ゴールすると残燃料・残機・CNP全員救出がボーナスになる。</li>
+      <li>スマホ: 左半分を押したまま倒す（左右で前後／上でジャンプ）・右半分か ⤒ でジャンプ・🔫 をタップで自動連射、押し続けて撃つ</li>
+      <li>PC: ←→ 前後 ・ Space / ↑ / Z ジャンプ ・ X 撃つ ・ V 自動連射 ・ P 一時停止 ・ M 音</li>
+      <li>姉妹作: <a href="https://sakuya.naoblock.jp/">咲耶スクランブル</a> / <a href="https://rally.naoblock.jp/">咲耶Nounラリー</a></li>
+    </ul>
+  </details>
 
-  <section id="rank" aria-label="ランキング TOP10" hidden>
-    <div id="rankform">
-      <p class="rank-msg">TOP10入り！ 名前を登録してください</p>
-      <input id="rankname" type="text" maxlength="20" autocomplete="off" placeholder="ニックネーム（必須）" />
-      <input id="rankxid" type="text" maxlength="20" autocomplete="off" placeholder="X の ID（任意・@なし）" />
-      <div id="rankxidp"></div>
-      <button id="ranksend" type="button">登録する</button>
-      <p id="rankstat"></p>
-    </div>
-    <h2 class="rank-title">&#x1F3C6; TOP10</h2>
-    <ol id="ranklist"></ol>
-  </section>
+  <script type="module">
+    // 共通部分は sakuya-kit（https://github.com/naonao1971/sakuya-kit）。版を上げるときは
+    // kit.css と同じ番号にそろえ、CHANGELOG を読んでから実機で確かめる
+    import { createKit } from "https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.2.0/kit.js";
 
-  <div class="info">
-    <b>咲耶ジャンプバグ</b> ─ むかし懐かしの「ジャンプバグ」風。⌐◨-◨カーは地面や屋根に触れるたび勝手に跳ねる。
-    <kbd>←</kbd><kbd>→</kbd> 前進/バック（画面は止まらないが、戻ってコインを取れる）　<kbd>SPACE</kbd>/<kbd>↑</kbd>/<kbd>Z</kbd> ジャンプ（押している間は高く跳ぶ。空中でもう2回まで跳べる）　<kbd>X</kbd> ショット　<kbd>V</kbd> 自動連射　<kbd>P</kbd> 一時停止　<kbd>M</kbd> 音<br>
-    画面は一定の速さで勝手に進む（強制スクロール）。壁と画面の左端にはさまれてもミス。敵は撃つか上から踏むと倒せる。溶岩に落ちる・トゲや敵に当たる・燃料切れでミス。途中の提灯がチェックポイント。
-  </div>
-  <footer>
-    本作は CryptoNinja / CryptoNinja Partners / Nouns の非公式ファンアートです ─ 姉妹作: <a href="https://sakuya.naoblock.jp/">咲耶スクランブル</a> / <a href="https://rally.naoblock.jp/">咲耶Nounラリー</a>
-  </footer>
-
-  <script>
-    "use strict";
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d");
     const W = canvas.width;
     const H = canvas.height;
-    // タッチ端末の判定。埋め込み表示(iframe)やブラウザによっては maxTouchPoints が
-    // 0 のまま返ることがあるので、メディアクエリと「実際に触れたか」でも拾う。
-    // それでも出ないときのために、右上の🎮で手動でも出し入れできる
-    // ボタンのアイコン。11×11 ドットの絵を SVG の矩形で描く(# = 塗り)。
-    // 絵文字は端末ごとに絵柄と大きさが変わるので使わない
-    const ICONS = {
-      jump: [".....#.....", "....###....", "...#####...", "..#######..", ".#########.", "....###....",
-             "....###....", "....###....", "....###....", "...........", "..#######.."],
-      pause: ["...........", "..##...##..", "..##...##..", "..##...##..", "..##...##..", "..##...##..",
-              "..##...##..", "..##...##..", "..##...##..", "..##...##..", "..........."],
-      play: ["...........", "..#........", "..##.......", "..###......", "..####.....", "..#####....",
-             "..####.....", "..###......", "..##.......", "..#........", "..........."],
-      sound: ["...........", ".....#.....", "....##..#..", "##.###...#.", "######.#.#.", "######.#.#.",
-              "######.#.#.", "##.###...#.", "....##..#..", ".....#.....", "..........."],
-      mute: ["...........", ".....#.....", "....##.....", "##.###.#..#", "######..##.", "######..##.",
-             "######.#..#", "##.###.....", "....##.....", ".....#.....", "..........."],
-      auto: ["...........", "...........", "#...#...#..", "##..##..##.", "###.###.###", "##..##..##.",
-             "#...#...#..", "...........", "...........", "...........", "..........."],
-      pad: ["...........", "...........", ".#########.", "##.######.#", "#...####.#.", "##.######.#",
-            "###########", "###.....###", ".#.......#.", "...........", "..........."]
-    };
-    function iconSvg(name) {
-      const rows = ICONS[name];
-      let rects = "";
-      rows.forEach((row, y) => {
-        for (let x = 0; x < row.length; x++) if (row[x] === "#") rects += `<rect x="${x}" y="${y}" width="1" height="1"/>`;
-      });
-      return `<svg class="icon" viewBox="0 0 11 11" aria-hidden="true">${rects}</svg>`;
-    }
-    function setIcon(btn, name) {
-      if (btn.dataset.icon === name && btn.firstElementChild) return;
-      btn.dataset.icon = name;
-      btn.innerHTML = iconSvg(name);
-    }
-    document.querySelectorAll("button[data-icon]").forEach((b) => { b.innerHTML = iconSvg(b.dataset.icon); });
 
-    const mq = (q) => window.matchMedia && window.matchMedia(q).matches;
-    let isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0 || mq("(pointer: coarse)") || mq("(hover: none)");
-    function setTouchMode(on) {
-      isTouch = on;
-      document.body.classList.toggle("touch", on);
-      const b = document.getElementById("btnPad");
-      if (b) b.classList.toggle("on", on);
-      if (window.__fitWrap) window.__fitWrap();
-    }
-    setTouchMode(isTouch);
-    window.addEventListener("touchstart", () => { if (!isTouch) { setTouchMode(true); onTouchDetected(); } }, { passive: true, capture: true });
-    window.addEventListener("pointerdown", (e) => { if (e.pointerType === "touch" && !isTouch) { setTouchMode(true); onTouchDetected(); } }, { capture: true });
-    const portraitMQ = window.matchMedia("(orientation: portrait)");
+    // 咲耶シリーズ共通のランキング（sakuya-kit/gas/apps-script.gs）。?game=jumpbug のシートを読み書きし、
+    // 他のタイトルと合わせた総合ランキングにも載る。旧スプレッドシート(score3)の記録は取り込み済み
+    const GAS_URL = "https://script.google.com/macros/s/AKfycby-UoKAfHw4eBULVb37tQzwPEhNm65B_HUktd9Sh0ZxMdOdmnRHdub0NeeXUCAqg8bG/exec";
+    const SHARE_URL = "https://jumpbug.naoblock.jp/";
+
+    const kit = createKit({
+      gameId: "jumpbug",
+      title: "SAKUYA JUMP BUG",
+      subtitle: "- ⌐◨-◨ CAR -",
+      canvas,
+      gasUrl: GAS_URL,
+      cnp: true,
+      // 旧版のベストスコアをそのまま引き継ぐ
+      hiScoreKey: "sakuyaJumpBugHi",
+      // GAS の _games のスコア上限と同じ値
+      maxScore: 60000,
+      // 音はこのゲーム独自の効果音とジングルを使う（kit のジングルは鳴らさない）
+      jingle: false,
+      // ゴール後・ゲームオーバー後も、結果画面の裏で花火や破片を動かし続ける
+      updateWhenOver: true,
+      controls: {
+        // 左半分のスティック。左右で前後、上に倒すとジャンプ。画面の右半分を押してもジャンプ
+        stick: true,
+        stickUpButton: "jump",
+        rightHalfButton: "jump",
+        buttons: [
+          { id: "jump", label: "⤒", ariaLabel: "ジャンプ", keys: ["KeyZ"], primary: true,
+            onPress: () => { jumpLatch = true; } },
+          { id: "fire", label: "🔫", ariaLabel: "バルカン（タップで自動連射の切り替え・押し続けて撃つ）", keys: ["KeyX", "KeyJ"] },
+        ],
+        // バルカン: 短くタップで自動連射の切り替え、押し続けたら撃つ。スマホは最初からオン
+        autoFire: { button: "fire", defaultOn: "touch", key: "KeyV" },
+      },
+      cutscenes: {
+        // どちらも流し終えるか、タップで飛ばすまで結果画面を待たせる
+        clear: { src: "assets/clear.mp4", skippable: true, blockResults: true },
+        gameOver: { src: "assets/gameover.mp4" },
+      },
+      resultScreen: {
+        mediaWidth: 520,
+        decorate: (g, info) => drawResultExtra(g, info),
+      },
+      share: {
+        when: "always",
+        url: SHARE_URL,
+        fileName: "sakuya-jumpbug.png",
+        text: () => buildShareText(),
+        image: () => buildShareCardCanvas(),
+      },
+      help: {
+        mobile: "左半分を押したまま倒す: 左右で前後／上でジャンプ。右半分か ⤒ でもジャンプ",
+        pc: "←→ 前後 ・ Space/↑/Z ジャンプ ・ X 撃つ ・ V 自動連射 ・ P 一時停止 ・ M 音",
+        playing: "長押しで高く跳ぶ。空中でもう2回まで跳べる",
+      },
+      // 音の解錠はスタートのタップの中で同期的に行う(iOS)
+      onStartGesture: () => { SFX.unlock(); },
+      onStart: () => { resetGame(); BGM.start(); },
+      onGameOver: (r) => {
+        // 動画が流せないときだけ、このゲームのジングルで補う(クリアはゴールの瞬間に鳴らしてある)
+        if (!r.cleared && !kit.cutscene.playing) SFX.over();
+      },
+      onPause: (p) => {
+        if (p) BGM.stop();
+        else if (state.phase === "play") BGM.start();
+      },
+      onMute: (m) => SFX.setMuted(m),
+      // ポーズ・タブ切替・通知の割り込みで、押しっぱなしのジャンプを捨てる
+      onInputReset: () => { spaceHeld = false; jumpLatch = false; },
+      // Space はプレイ中だけジャンプに使う(タイトルと結果画面では kit のスタート)
+      onKeyDown: (e) => {
+        if (e.code !== "Space" || kit.phase !== "playing" || kit.paused) return;
+        const t = e.target;
+        if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA")) return;
+        e.preventDefault();
+        if (!e.repeat) { spaceHeld = true; jumpLatch = true; }
+        return false;
+      },
+      update: () => tick(),
+      render: () => render(),
+    });
+    window.addEventListener("keyup", (e) => { if (e.code === "Space") spaceHeld = false; });
+    // 遊び方はランキングより上に出す
+    document.querySelector(".sk-leaderboard").before(document.getElementById("how"));
 
     // ------------------------------------------------------------------
     // パレット(本家 RETRO を継承)。ここ以外で色を増やしすぎない
@@ -565,36 +236,24 @@
       { rank: 4, score: 800 },
       { rank: 5, score: 1500 }
     ];
-    const CNP = [
-      { hue: 196, tier: 0, id: "cnp_sotai_leelee",   label: "リーリー" },
-      { hue: 150, tier: 0, id: "cnp_sotai_mitama",   label: "ミタマ" },
-      { hue: 46,  tier: 0, id: "cnp_sotai_narukami", label: "ナルカミ" },
-      { hue: 24,  tier: 0, id: "cnp_sotai_orochi",   label: "オロチ" },
-      { hue: 220, tier: 1, id: "cnp_sotai_luna",     label: "ルナ" },
-      { hue: 92,  tier: 1, id: "cnp_sotai_yama",     label: "ヤマ" },
-      { hue: 322, tier: 1, id: "cnp_sotai_makami",   label: "マカミ" },
-      { hue: 262, tier: 2, id: "cnp_sotai_towa",     label: "トワ" },
-      { hue: 174, tier: 2, id: "cnp_sotai_setsuna",  label: "セツナ" },
-      { hue: 292, tier: 3, id: "cnp_sotai_ema",      label: "エマ" },
-      { hue: 352, tier: 4, id: "cnp_sotai_taruto",   label: "タルト" }
-    ].map((d, i) => {
-      const ch = { ...d, index: i, tierDef: TIERS[d.tier], img: new Image(), ready: false, sil: null };
-      ch.img.onload = () => {
-        if (!ch.img.naturalWidth) return;
-        ch.ready = true;
-        // 未救出スロット用の黒シルエットを一度だけ作る
-        const s = document.createElement("canvas");
-        s.width = s.height = 64;
-        const g = s.getContext("2d");
-        g.drawImage(ch.img, 0, 0, 64, 64);
-        g.globalCompositeOperation = "source-in";
-        g.fillStyle = "#000";
-        g.fillRect(0, 0, 64, 64);
-        ch.sil = s;
-      };
-      ch.img.src = "assets/cnp/" + ch.id + ".png";
-      return ch;
-    });
+    // CNP 11体。絵・名前・色は sakuya-kit の正典（kit.cnp.chars）をそのまま使い、
+    // このゲームのレア度(tier)だけ足す。コースの奥・難所ほど高ランクのキャラを置く
+    const CNP_TIER = [0, 0, 0, 0, 1, 1, 1, 2, 2, 3, 4];
+    const CNP = kit.cnp.chars.map((ch, i) => Object.assign(ch, { tier: CNP_TIER[i], tierDef: TIERS[CNP_TIER[i]] }));
+    // 未救出スロット用の黒シルエット(シェアカード・結果画面)。絵が届いてから一度だけ作る
+    function silOf(ch) {
+      if (ch.sil) return ch.sil;
+      if (!ch.ready) return null;
+      const s = document.createElement("canvas");
+      s.width = s.height = 64;
+      const g = s.getContext("2d");
+      g.drawImage(ch.img, 0, 0, 64, 64);
+      g.globalCompositeOperation = "source-in";
+      g.fillStyle = "#000";
+      g.fillRect(0, 0, 64, 64);
+      ch.sil = s;
+      return s;
+    }
 
     // 咲耶の表情シート(本家 image01.png)。①通常 ②被弾 ③怒り ④苦痛 ⑤決意
     const pilotImg = new Image();
@@ -778,7 +437,7 @@
     // 効果音 / BGM(WebAudio のチップチューン。音源ファイル不要)
     // ------------------------------------------------------------------
     const SFX = {
-      ctx: null, master: null, bgmGain: null, muted: false, _noise: null,
+      ctx: null, master: null, bgmGain: null, muted: kit.sfx.muted, _noise: null,
       unlock() {
         if (!SFX.ctx) {
           const AC = window.AudioContext || window.webkitAudioContext;
@@ -921,14 +580,9 @@
     // ------------------------------------------------------------------
     // 状態
     // ------------------------------------------------------------------
-    let hiScore = 0;
-    try { hiScore = Number(localStorage.getItem("sakuyaJumpBugHi")) || 0; } catch (e) { /* 保存不可の環境でも遊べる */ }
-
-    const input = { left: false, right: false, jump: false, fire: false };
-    let autoFire = isTouch;   // 自動連射。スマホは最初からオン(咲耶スクランブルと同じ)
+    // ハイスコア(kit.score.hi。旧版の sakuyaJumpBugHi を引き継ぐ)と自動連射(kit.autoFire)は kit が持つ
     const state = {
       phase: "title",   // title | play | dying | goal | clear | over
-      paused: false,
       frame: 0,
       score: 0,
       lives: START_LIVES,
@@ -946,11 +600,9 @@
       caption: null,
       timer: 0,
       rescued: new Array(CNP.length).fill(false),
-      rosterFlash: new Array(CNP.length).fill(0),
       portraitTimer: 0,
       nextExtra: 20000,
-      bonus: null,
-      newRecord: false
+      bonus: null
     };
 
     function makeCar(x, y) {
@@ -970,13 +622,20 @@
       };
     }
 
-    // キー/ボタン(input)とスティック(stick)を合わせた、このフレームの入力
+    // キー・スティック・ボタンを合わせた、このフレームの入力。
+    //  - 左右: ←→/AD とスティックの左右(少しでも倒せば効く。旧版と同じデジタル扱い)
+    //  - ジャンプ: JUMP ボタン・Z・Space・↑/W・スティックの上・画面右半分
+    //  - jumpLatch: 1フレームより短いタップでも取りこぼさないように、押した瞬間を覚えておく
+    let spaceHeld = false, jumpLatch = false;
     function effectiveInput() {
+      const I = kit.input, sx = I.stickX;
+      const jump = !!I.buttons.jump || I.up || spaceHeld || jumpLatch;
+      jumpLatch = false;
       return {
-        left: input.left || stick.x < 0,
-        right: input.right || stick.x > 0,
-        jump: input.jump || stick.up || !!stick.jumpTap,
-        fire: input.fire
+        left: I.left || sx < -0.15,
+        right: I.right || sx > 0.15,
+        jump,
+        fire: !!I.buttons.fire
       };
     }
 
@@ -992,10 +651,8 @@
       state.particles = [];
       state.pops = [];
       state.rescued.fill(false);
-      state.rosterFlash.fill(0);
       state.nextExtra = 20000;
       state.bonus = null;
-      state.newRecord = false;
       for (const c of level.coins) c.got = false;
       for (const f of level.fuels) f.got = false;
       for (const c of level.cnps) c.got = false;
@@ -1004,9 +661,6 @@
       state.car.inv = 60;
       state.phase = "play";
       showCaption(0);
-      shareBtn.hidden = true;
-      joyTaught = false;   // 走り直すたびに影を出し直す
-      rankReset();
     }
 
     function respawn() {
@@ -1183,7 +837,7 @@
       // ショット
       if (car.fireCd > 0) car.fireCd--;
       // 自動連射がオンなら撃ち続ける。ジャンプに集中できるように
-      if ((I.fire || autoFire) && car.fireCd === 0 && state.bullets.length < 3) {
+      if ((I.fire || kit.autoFire.on) && car.fireCd === 0 && state.bullets.length < 3) {
         const bx = car.facing > 0 ? car.x + CAR_W + 4 : car.x - 12;
         state.bullets.push({ x: bx, y: car.y + 12, vx: car.facing * 11 + car.vx * 0.5, life: 55 });
         car.fireCd = 12;
@@ -1344,7 +998,7 @@
           c.got = true;
           const ch = CNP[c.idx];
           state.rescued[c.idx] = true;
-          state.rosterFlash[c.idx] = 45;
+          kit.cnp.run.collect(ch.no);   // 上段のロスター(kit.hud.roster)が光る
           state.portraitTimer = 60;
           addScore(ch.tierDef.score, c.x, by - 30, `${ch.label} +${ch.tierDef.score}`);
           burst(c.x, by, `hsl(${ch.hue},90%,65%)`, 24, 4, 0.05, 3);
@@ -1365,7 +1019,8 @@
         state.timer = 150;
         BGM.stop();
         // 演出動画が流せるなら、ファンファーレは動画の音に任せる(二重に鳴らさない)
-        if (!clearVideo.canPlayThrough()) SFX.clear();
+        const cv = kit.cutscene.videos.clear;
+        if (!cv || !cv.canPlayThrough()) SFX.clear();
         burst(level.goalX, GROUND_Y - 140, C.gold, 40, 6, 0.08, 3);
         burst(level.goalX, GROUND_Y - 140, C.magenta, 30, 5, 0.08, 3);
       }
@@ -1379,7 +1034,6 @@
       for (const p of state.pops) { p.y -= 0.6; p.t--; }
       state.pops = state.pops.filter((p) => p.t > 0);
       if (state.caption) { state.caption.t--; if (state.caption.t <= 0) state.caption = null; }
-      for (let i = 0; i < state.rosterFlash.length; i++) if (state.rosterFlash[i] > 0) state.rosterFlash[i]--;
       if (state.shake > 0) state.shake *= 0.85;
       if (state.shake < 0.5) state.shake = 0;
       if (state.portraitTimer > 0) state.portraitTimer--;
@@ -1395,18 +1049,11 @@
       };
       state.bonus = b;
       state.score += b.fuel + b.lives + b.all;
-      saveHi();
       state.phase = "clear";
       state.timer = 0;
-      beginCutscene(clearVideo, () => {});   // ファンファーレはゴールの瞬間に鳴らしてある
-    }
-
-    function saveHi() {
-      if (state.score > hiScore) {
-        hiScore = state.score;
-        state.newRecord = true;
-        try { localStorage.setItem("sakuyaJumpBugHi", String(hiScore)); } catch (e) { /* 無視 */ }
-      }
+      // ハイスコアの保存・演出動画・結果画面・ランキング登録は kit が受け持つ。
+      // ファンファーレはゴールの瞬間に鳴らしてある
+      kit.gameOver({ score: state.score, cleared: true, progress: 100 });
     }
 
     function tick() {
@@ -1427,8 +1074,7 @@
           else {
             state.phase = "over";
             state.timer = 0;
-            saveHi();
-            beginCutscene(gameOverVideo, () => SFX.over());
+            kit.gameOver({ score: state.score, cleared: false, progress: progressPct() });
           }
         }
       } else if (state.phase === "goal") {
@@ -1965,37 +1611,9 @@
     }
 
     // 短い通知(自動連射の切り替えなど)。ロスターの下に出す
-    function showToast(text) { state.toast = { text, t: 90 }; }
-    function drawToast() {
-      const tt = state.toast;
-      if (!tt) return;
-      tt.t--;
-      if (tt.t <= 0) { state.toast = null; return; }
-      ctx.globalAlpha = Math.min(1, tt.t / 15);
-      ctx.font = C.jfont(16);
-      ctx.textAlign = "center";
-      const w = ctx.measureText(tt.text).width + 28;
-      ctx.fillStyle = "rgba(4,6,12,0.82)";
-      ctx.fillRect(W / 2 - w / 2, 70, w, 28);
-      ctx.strokeStyle = "rgba(232,197,106,0.55)";
-      ctx.lineWidth = 1;
-      ctx.strokeRect(W / 2 - w / 2 + 0.5, 70.5, w - 1, 27);
-      ctx.fillStyle = C.ink;
-      ctx.fillText(tt.text, W / 2, 90);
-      ctx.textAlign = "left";
-      ctx.globalAlpha = 1;
-    }
-
     function drawHud() {
-      // スコア
-      ctx.font = C.font(12);
-      ctx.fillStyle = C.gold;
-      ctx.fillText("SCORE", 16, 24);
-      ctx.fillStyle = C.ink;
-      ctx.fillText(String(state.score).padStart(7, "0"), 16, 42);
-      ctx.fillStyle = C.dim;
-      ctx.font = C.font(8);
-      ctx.fillText("HI " + String(Math.max(hiScore, state.score)).padStart(7, "0"), 16, 58);
+      // スコア(左上)。シリーズ共通の部品
+      kit.hud.score({ value: state.score });
 
       // 咲耶の窓
       if (pilotImg.complete && pilotImg.naturalWidth) {
@@ -2011,31 +1629,8 @@
         ctx.strokeRect(17, 67, 86, 64);
       }
 
-      // CNP ロスター(上段中央)
-      const slot = 30, gap = 4;
-      const total = CNP.length * slot + (CNP.length - 1) * gap;
-      const rx = (W - total) / 2, ry = 10;
-      CNP.forEach((ch, i) => {
-        const x = rx + i * (slot + gap);
-        const got = state.rescued[i];
-        ctx.fillStyle = "rgba(4,6,12,0.7)";
-        ctx.fillRect(x, ry, slot, slot);
-        if (got) drawCnpFigure(ch, x + slot / 2, ry + slot / 2, slot - 2);
-        else if (ch.sil) { ctx.globalAlpha = 0.9; ctx.drawImage(ch.sil, x + 1, ry + 1, slot - 2, slot - 2); ctx.globalAlpha = 1; }
-        ctx.strokeStyle = got ? `hsl(${ch.hue},80%,60%)` : "rgba(232,197,106,0.35)";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x + 1, ry + 1, slot - 2, slot - 2);
-        if (state.rosterFlash[i] > 0 && Math.floor(state.rosterFlash[i] / 4) % 2 === 0) {
-          ctx.fillStyle = "rgba(255,255,255,0.6)";
-          ctx.fillRect(x, ry, slot, slot);
-        }
-      });
-      const got = state.rescued.filter(Boolean).length;
-      ctx.font = C.font(8);
-      ctx.textAlign = "center";
-      ctx.fillStyle = got === CNP.length ? C.magenta : C.gold;
-      ctx.fillText(`CNP ${got} / ${CNP.length}`, W / 2, ry + slot + 14);
-      ctx.textAlign = "left";
+      // CNP ロスター(上段中央)。シリーズ共通の部品(kit.hud.roster)で描く
+      kit.hud.roster({ y: 10, slot: 30, gap: 4 });
 
       // 残機と燃料(右上。システムボタンの左)
       const rx2 = W - 280;
@@ -2083,7 +1678,7 @@
       }
 
       // ゾーン名のテロップ
-      if (state.caption && state.phase === "play" && !state.paused) {
+      if (state.caption && state.phase === "play" && !kit.paused) {
         const z = state.caption.zone;
         const a = Math.min(1, state.caption.t / 20);
         ctx.globalAlpha = a;
@@ -2128,7 +1723,6 @@
       ctx.lineWidth = 2;
       ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
     }
-    const blinkOn = () => Math.floor(state.frame / 30) % 2 === 0;
 
     // タイトル: 背景の町を流しつつ、中央で⌐◨-◨カーが跳ね続ける
     const titleCar = makeCar(W / 2 - CAR_W / 2, GROUND_Y - CAR_H);
@@ -2166,432 +1760,27 @@
 
       ctx.font = C.jfont(16);
       ctx.fillStyle = C.ink;
-      const lines = isTouch
+      const lines = kit.isMobile
         ? ["左半分を押したまま倒す: 左右で前後／上でジャンプ", "右半分(または JUMP)長押しで高く、空中でもう2回まで跳べる　バルカン: タップで自動連射"]
         : ["← → 前進・バック　　SPACE / ↑ 長押しで高く跳ぶ　　X 撃つ", "長押しで高く跳ぶ。空中でもう2回まで跳べる"];
       ctx.fillText(lines[0], W / 2, 226);
       ctx.fillStyle = C.dim;
       ctx.fillText(lines[1], W / 2, 250);
 
-      if (blinkOn()) {
-        ctx.font = C.font(14);
-        ctx.fillStyle = C.gold;
-        ctx.fillText(isTouch ? "TAP TO START" : "PRESS SPACE / ENTER", W / 2, 300);
-      }
+      // スタートボタンは kit が車の上(startAnchor)に出す
       ctx.font = C.font(8);
       ctx.fillStyle = C.dim;
-      ctx.fillText("HI " + String(hiScore).padStart(7, "0") + "   PROTOTYPE", W / 2, 322);
+      ctx.fillText("HI " + String(kit.score.hi).padStart(7, "0"), W / 2, 280);
       ctx.textAlign = "left";
     }
 
-    function drawResult(title, color) {
-      panel(W / 2 - 250, 110, 500, 310);
-      ctx.textAlign = "center";
-      ctx.font = C.font(28);
-      ctx.fillStyle = color;
-      ctx.fillText(title, W / 2, 160);
-      let y = 200;
-      ctx.font = C.jfont(18);
-      if (state.bonus) {
-        const b = state.bonus;
-        const rows = [
-          ["燃料ボーナス", b.fuel],
-          ["残機ボーナス", b.lives],
-          ["CNP全員救出", b.all]
-        ];
-        for (const [k, v] of rows) {
-          ctx.fillStyle = C.dim;
-          ctx.textAlign = "left";
-          ctx.fillText(k, W / 2 - 180, y);
-          ctx.textAlign = "right";
-          ctx.fillStyle = v ? C.ink : C.dim;
-          ctx.fillText(v ? "+" + v : "─", W / 2 + 180, y);
-          y += 26;
-        }
-        ctx.textAlign = "center";
-      }
-      ctx.font = C.font(14);
-      ctx.fillStyle = C.gold;
-      ctx.fillText("SCORE " + String(state.score).padStart(7, "0"), W / 2, y + 12);
-      if (state.newRecord && blinkOn()) {
-        ctx.font = C.font(10);
-        ctx.fillStyle = C.magenta;
-        ctx.fillText("NEW RECORD!", W / 2, y + 32);
-      }
-      // 救出したCNP
-      const got = state.rescued.filter(Boolean).length;
-      const slot = 34;
-      const x0 = W / 2 - (CNP.length * slot) / 2;
-      const ry = y + 46;
-      CNP.forEach((ch, i) => {
-        const x = x0 + i * slot;
-        if (state.rescued[i]) drawCnpFigure(ch, x + slot / 2, ry + slot / 2, slot - 4);
-        else if (ch.sil) { ctx.globalAlpha = 0.6; ctx.drawImage(ch.sil, x + 2, ry + 2, slot - 4, slot - 4); ctx.globalAlpha = 1; }
-      });
-      ctx.font = C.jfont(16);
-      ctx.fillStyle = got === CNP.length ? C.magenta : C.ink;
-      ctx.fillText(got === CNP.length ? "CNP 11体 コンプリート!" : `CNP ${got} / ${CNP.length} 救出`, W / 2, ry + slot + 22);
-      if (state.timer > 60 && blinkOn()) {
-        ctx.font = C.font(10);
-        ctx.fillStyle = C.gold;
-        ctx.fillText(isTouch ? "TAP TO RETRY" : "PRESS SPACE / ENTER", W / 2, 410);
-      }
-      ctx.textAlign = "left";
+    // どこまで進んだか(0〜100)。ゴールしたら 100
+    function progressPct() {
+      if (state.phase === "clear") return 100;
+      const x = state.car ? state.car.x + CAR_W / 2 : 0;
+      return Math.max(0, Math.min(99, Math.floor(x / level.goalX * 100)));
     }
 
-    function render() {
-      ctx.save();
-      if (state.phase === "title") {
-        drawTitle();
-        drawCrt();
-        ctx.restore();
-        return;
-      }
-      drawBackground();
-      const sx = state.shake ? (Math.random() - 0.5) * state.shake : 0;
-      const sy = state.shake ? (Math.random() - 0.5) * state.shake : 0;
-      ctx.save();
-      ctx.translate(Math.round(-state.camX + sx), Math.round(sy));
-      drawWorld();
-      ctx.restore();
-      drawHud();
-      drawToast();
-      if (cutscene) drawCutscene();
-      else {
-        if (state.phase === "clear") drawResult("STAGE CLEAR!", C.gold);
-        if (state.phase === "over") drawResult("GAME OVER", C.danger);
-      }
-      if (state.paused) {
-        // 真ん中には再開ボタンがあるので、文字はその上に出す
-        panel(W / 2 - 120, H / 2 - 130, 240, 70);
-        ctx.textAlign = "center";
-        ctx.font = C.font(18);
-        ctx.fillStyle = C.gold;
-        ctx.fillText("PAUSE", W / 2, H / 2 - 86);
-        ctx.textAlign = "left";
-      }
-      drawCrt();
-      ctx.restore();
-    }
-
-    // ------------------------------------------------------------------
-    // ループ(60Hz 固定ステップ。120Hz 画面でも速度が変わらない)
-    // ------------------------------------------------------------------
-    const STEP = 1000 / 60;
-    let last = 0, acc = 0;
-    function loop(t) {
-      if (!last) last = t;
-      let dt = t - last;
-      last = t;
-      if (dt > 250) dt = 250;
-      const blocked = isTouch && portraitMQ.matches;
-      if (!state.paused && !blocked) {
-        acc += dt;
-        let n = 0;
-        while (acc >= STEP && n < 5) { tick(); acc -= STEP; n++; }
-        if (n === 5) acc = 0;
-      }
-      render();
-      joyHintUpdate();
-      // 一時停止ボタンはプレイ中だけ出す(タイトル・リザルトでは出さない)
-      const showPause = state.phase === "play" || state.phase === "dying" || state.phase === "goal";
-      if (pauseBtn.hidden === showPause) pauseBtn.hidden = !showPause;
-      updateRankVisible();
-      // 演出動画の間は操作ボタンを隠す(動画の上にボタンが重ならないように)
-      if (document.body.classList.contains("cutscene") !== !!cutscene) document.body.classList.toggle("cutscene", !!cutscene);
-      requestAnimationFrame(loop);
-    }
-    requestAnimationFrame(loop);
-
-    // ------------------------------------------------------------------
-    // 画面へのはめ込み。CSSの 100dvh だけで決めると、ページ側の余白
-    // (ノッチ/ホームバーの safe-area や、埋め込み表示で :root に付く余白)の
-    // ぶんだけ下がはみ出して見切れていた。実際に使える幅と高さを測って決める
-    // ------------------------------------------------------------------
-    const wrapEl = document.getElementById("wrap");
-    const insetProbe = document.createElement("div");
-    insetProbe.style.cssText = "position:fixed;left:0;top:0;visibility:hidden;pointer-events:none;" +
-      "padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)";
-    document.body.appendChild(insetProbe);
-    function fitWrap() {
-      const px = (v) => parseFloat(v) || 0;
-      const ins = getComputedStyle(insetProbe);
-      const root = getComputedStyle(document.documentElement);
-      const top = Math.max(px(ins.paddingTop), px(root.paddingTop));
-      const bottom = Math.max(px(ins.paddingBottom), px(root.paddingBottom));
-      const left = px(ins.paddingLeft), right = px(ins.paddingRight);
-      const vw = document.documentElement.clientWidth || window.innerWidth;
-      const vh = window.innerHeight;
-      let availW, availH;
-      if (isTouch) {
-        availW = vw - left - right;
-        availH = vh - top - bottom;
-        document.body.style.minHeight = Math.max(0, availH) + "px";
-      } else {
-        availW = Math.min(960, vw - 32 - 4);        // body の左右余白16px×2 と枠2px×2
-        availH = vh - top - bottom - 32 - 4;
-        document.body.style.minHeight = "";
-      }
-      const w = Math.floor(Math.max(160, Math.min(availW, availH * 16 / 9)));
-      wrapEl.style.width = w + "px";
-    }
-    fitWrap();
-    window.__fitWrap = fitWrap;
-    window.addEventListener("resize", fitWrap);
-    window.addEventListener("orientationchange", () => setTimeout(fitWrap, 250));
-    if (window.visualViewport) window.visualViewport.addEventListener("resize", fitWrap);
-
-    // ------------------------------------------------------------------
-    // 入力
-    // ------------------------------------------------------------------
-    const shareBtn = document.getElementById("btnShare");
-    const muteBtn = document.getElementById("btnMute");
-    const pauseBtn = document.getElementById("btnPause");
-
-    function canRestart() {
-      if (cutscene) return false;
-      return state.phase === "title" || ((state.phase === "over" || state.phase === "clear") && state.timer > 60);
-    }
-    async function startOrRestart() {
-      if (!canRestart()) return;
-      // 動画もユーザー操作の中でしか音付きで流せない(iOS)。解錠は await より前に同期で行う
-      unlockCutsceneVideos();
-      await SFX.unlock();
-      resetGame();
-      BGM.start();
-    }
-    function setPaused(p) {
-      if (!(state.phase === "play" || state.phase === "dying")) p = false;
-      state.paused = p;
-      // 押したまま止めると pointerup が来ないことがある。再開した瞬間に
-      // その向きへ走り出さないよう、止めるときに入力を捨てる
-      if (p) { for (const k in input) input[k] = false; joyEnd(); document.querySelectorAll(".pad button[data-key].on").forEach((b) => b.classList.remove("on")); vulcanBtn.classList.remove("firing"); }
-      if (p) BGM.stop(); else if (state.phase === "play") BGM.start();
-      setIcon(pauseBtn, p ? "play" : "pause");
-      pauseBtn.classList.toggle("paused", p);
-      pauseBtn.setAttribute("aria-label", p ? "再開" : "一時停止");
-    }
-
-    const KEYMAP = {
-      ArrowLeft: "left", KeyA: "left",
-      ArrowRight: "right", KeyD: "right",
-      Space: "jump", ArrowUp: "jump", KeyW: "jump", KeyZ: "jump",
-      KeyX: "fire", KeyJ: "fire"
-    };
-    // 入力欄に文字を打っている間は、ゲームの操作を1つも拾わない。
-    // 拾うと WASD・Space・P・M が preventDefault で消えたり、ポーズや再スタートに
-    // 取られたりする(咲耶Nounラリーで「wasd master」が「mter」になった)
-    const typingInField = (e) => {
-      const t = e.target;
-      if (!t || t === document.body) return false;
-      if (t.isContentEditable) return true;
-      const tag = (t.tagName || "").toLowerCase();
-      return tag === "input" || tag === "textarea" || tag === "select";
-    };
-    window.addEventListener("keydown", (e) => {
-      if (typingInField(e)) return;
-      // 演出動画はいつでも飛ばせる。飛ばしたキーでそのまま再スタートまで進まないよう、ここで止める
-      if (cutscene && !e.repeat) { e.preventDefault(); endCutscene(); return; }
-      const k = KEYMAP[e.code];
-      if (k) { input[k] = true; e.preventDefault(); }
-      if ((e.code === "Space" || e.code === "Enter") && !e.repeat) startOrRestart();
-      if ((e.code === "KeyP" || e.code === "Escape") && !e.repeat) setPaused(!state.paused);
-      if (e.code === "KeyM" && !e.repeat) toggleMute();
-      if (e.code === "KeyV" && !e.repeat) toggleAutoFire();
-    });
-    window.addEventListener("keyup", (e) => {
-      if (typingInField(e)) return;
-      const k = KEYMAP[e.code];
-      if (k) { input[k] = false; e.preventDefault(); }
-    });
-    window.addEventListener("blur", () => {
-      for (const k in input) input[k] = false;
-      setPaused(true);
-    });
-    document.addEventListener("visibilitychange", () => { if (document.hidden) setPaused(true); });
-
-    // タッチボタン。押している間だけ input を立てる(指がずれても離すまで保持)
-    document.querySelectorAll(".pad button[data-key]").forEach((btn) => {
-      const key = btn.dataset.key;
-      const on = (e) => {
-        e.preventDefault();
-        input[key] = true;
-        btn.classList.add("on");
-        try { btn.setPointerCapture(e.pointerId); } catch (err) { /* 古いブラウザ */ }
-        if (key === "jump" || key === "fire") startOrRestart();
-      };
-      const off = () => { input[key] = false; btn.classList.remove("on"); };
-      btn.addEventListener("pointerdown", on);
-      btn.addEventListener("pointerup", off);
-      btn.addEventListener("pointercancel", off);
-      btn.addEventListener("lostpointercapture", off);
-      btn.addEventListener("contextmenu", (e) => e.preventDefault());
-    });
-    // ------------------------------------------------------------------
-    // バルカン(咲耶スクランブルと同じ自動連射つき)。スマホでは最初から自動連射オン、PCはオフ。
-    // 自動連射の切り替えと手動の発射を1つのボタンにまとめる:
-    //  - 短くタップ → 自動連射のオン/オフを切り替える
-    //  - 押し続ける → 押している間だけ撃つ(自動連射オフのときの手動射撃)
-    // PC は X で撃ち、V で自動連射を切り替える
-    // ------------------------------------------------------------------
-    const VULCAN_TAP_MS = 250;   // これより短く離したらタップ(切り替え)とみなす
-    const vulcanBtn = document.getElementById("btnVulcan");
-    function updateAutoUI() {
-      vulcanBtn.classList.toggle("on", autoFire);
-      vulcanBtn.setAttribute("aria-label", autoFire
-        ? "バルカン:自動連射オン(タップで切り替え・長押しで撃つ)"
-        : "バルカン:自動連射オフ(タップで切り替え・長押しで撃つ)");
-    }
-    // 後からタッチ端末だと分かったときも、スマホと同じく自動連射をオンにする
-    let autoTouched = false;
-    function onTouchDetected() {
-      if (autoTouched || autoFire) return;
-      autoFire = true;
-      updateAutoUI();
-    }
-    function toggleAutoFire() {
-      autoTouched = true;
-      autoFire = !autoFire;
-      updateAutoUI();
-      showToast(autoFire ? "バルカン自動連射: オン" : "バルカン自動連射: オフ");
-    }
-    (function bindVulcan(button) {
-      let startedAt = 0;
-      const release = () => {
-        startedAt = 0;
-        input.fire = false;
-        button.classList.remove("firing");
-      };
-      button.addEventListener("pointerdown", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        try { button.setPointerCapture(e.pointerId); } catch (err) { /* 古いブラウザ */ }
-        startedAt = performance.now();
-        input.fire = true;               // 押した瞬間から撃つ(長押しならそのまま撃ち続ける)
-        button.classList.add("firing");
-        startOrRestart();
-      });
-      button.addEventListener("pointerup", (e) => {
-        e.preventDefault();
-        const tap = startedAt > 0 && performance.now() - startedAt < VULCAN_TAP_MS;
-        release();
-        if (tap && state.phase === "play") toggleAutoFire();
-      });
-      button.addEventListener("pointercancel", release);
-      button.addEventListener("lostpointercapture", release);
-      button.addEventListener("contextmenu", (e) => e.preventDefault());
-    })(vulcanBtn);
-    updateAutoUI();
-
-    // ------------------------------------------------------------------
-    // バーチャルスティック(咲耶Nounラリーの浮動式を移植)
-    //  - プレイ中、画面の左半分のどこでも、触れた場所にスティックが出る
-    //  - 左右に倒すと加速/減速、上に倒すとジャンプ(長押しと同じ)
-    //  - 原点は指から JOY_R 以内へ引きずる。固定だと逆へ切り返すのに指を大きく
-    //    戻す必要がある(ラリーでの実測: 固定90px → 追従30px)
-    //  右手は JUMP / バルカンボタン
-    // ------------------------------------------------------------------
-    const JOY_DEAD = 10;   // 中心からこれ未満は無入力
-    const JOY_R = 24;      // 原点が指を追う半径
-    const JOY_UP = 14;     // これ以上上に倒すとジャンプ
-    const stick = { x: 0, up: false };
-    // 右半分を押している指(ジャンプ用)。ボタンが見えない端末でも跳べるようにする
-    const jumpTouches = new Set();
-    const ring = document.getElementById("joyring");
-    const knob = document.getElementById("joyknob");
-    let joy = null;
-    let joyTaught = false;
-
-    function joyHintUpdate() {
-      const show = isTouch && !joyTaught && state.phase === "play" && !state.paused && !joy;
-      document.body.classList.toggle("joyhint", show);
-    }
-    function joyShow(ox, oy, kx, ky) {
-      ring.style.left = ox + "px"; ring.style.top = oy + "px";
-      knob.style.left = kx + "px"; knob.style.top = ky + "px";
-      ring.classList.add("on"); knob.classList.add("on");
-    }
-    function joyEnd(e) {
-      if (e && jumpTouches.delete(e.pointerId)) { stick.jumpTap = jumpTouches.size > 0; return; }
-      if (!e) { jumpTouches.clear(); stick.jumpTap = false; }
-      if (e && joy && e.pointerId !== joy.id) return;
-      joy = null;
-      stick.x = 0; stick.up = false;
-      ring.classList.remove("on"); knob.classList.remove("on");
-      joyHintUpdate();
-    }
-    canvas.addEventListener("pointerdown", (e) => {
-      if (cutscene) { endCutscene(); return; }
-      if (state.paused) { setPaused(false); return; }
-      const r = canvas.getBoundingClientRect();
-      const leftHalf = e.clientX < r.left + r.width / 2;
-      if ((state.phase === "play" || state.phase === "dying") && leftHalf && e.pointerType !== "mouse") {
-        e.preventDefault();
-        if (!isTouch) setTouchMode(true);
-        joy = { id: e.pointerId, ox: e.clientX, oy: e.clientY };
-        try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* 古いブラウザ */ }
-        joyShow(joy.ox, joy.oy, joy.ox, joy.oy);
-        joyHintUpdate();
-        return;
-      }
-      // 右半分: 押している間ジャンプ(JUMPボタンと同じ)
-      if (state.phase === "play" && !leftHalf && e.pointerType !== "mouse") {
-        e.preventDefault();
-        if (!isTouch) setTouchMode(true);
-        jumpTouches.add(e.pointerId);
-        stick.jumpTap = true;
-        try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* 古いブラウザ */ }
-        return;
-      }
-      startOrRestart();
-    });
-    window.addEventListener("pointermove", (e) => {
-      if (!joy || e.pointerId !== joy.id) return;
-      let dx = e.clientX - joy.ox, dy = e.clientY - joy.oy;
-      const len = Math.hypot(dx, dy);
-      if (len > JOY_R) {
-        joy.ox = e.clientX - dx / len * JOY_R;
-        joy.oy = e.clientY - dy / len * JOY_R;
-        dx = dx / len * JOY_R; dy = dy / len * JOY_R;
-      }
-      joyShow(joy.ox, joy.oy, joy.ox + dx, joy.oy + dy);
-      stick.x = Math.abs(dx) >= JOY_DEAD ? Math.sign(dx) : 0;
-      stick.up = dy <= -JOY_UP;
-      if (!joyTaught && (stick.x || stick.up)) { joyTaught = true; joyHintUpdate(); }
-    });
-    window.addEventListener("pointerup", joyEnd);
-    window.addEventListener("pointercancel", joyEnd);
-
-    // iOS のピンチズームは touch-action:none では止まらないので、走っている間だけ
-    // gesture* と2本指の touchmove を打ち消す(咲耶Nounラリーと同じ対処)。
-    // 1本指の touchmove は打ち消さない ― スティックがそれで動いている
-    const zoomLock = () => state.phase === "play" || state.phase === "dying" || state.phase === "goal";
-    for (const type of ["gesturestart", "gesturechange", "gestureend"]) {
-      document.addEventListener(type, (e) => { if (zoomLock()) e.preventDefault(); });
-    }
-    document.addEventListener("touchmove", (e) => {
-      if (zoomLock() && e.touches.length > 1) e.preventDefault();
-    }, { passive: false });
-
-    function toggleMute() {
-      SFX.unlock();
-      SFX.setMuted(!SFX.muted);
-      syncCutsceneVideoMute();   // 再生中の演出動画にも即座に反映する
-      setIcon(muteBtn, SFX.muted ? "mute" : "sound");
-      muteBtn.setAttribute("aria-label", SFX.muted ? "音をオン" : "音をオフ");
-    }
-    muteBtn.addEventListener("click", (e) => { e.stopPropagation(); toggleMute(); });
-    document.getElementById("btnPad").addEventListener("click", (e) => { e.stopPropagation(); setTouchMode(!isTouch); });
-    pauseBtn.addEventListener("click", (e) => { e.stopPropagation(); setPaused(!state.paused); });
-
-    // ------------------------------------------------------------------
-    // Xシェア(咲耶スクランブルと同じ作り)
-    //  - 結果を描いた画像カードを作り、対応端末ではOSの共有シートへ画像と文章を渡す
-    //    (Xを選べば画像付きで投稿できる)
-    //  - 共有シートが無い環境では画像を保存してから投稿画面を開き、手動で添付してもらう
-    //    (Xの投稿画面はURL経由での画像添付に対応していない)
-    // ------------------------------------------------------------------
-    const SHARE_URL = "https://jumpbug.naoblock.jp/";
     function buildShareText() {
       const got = state.rescued.filter(Boolean).length;
       const score = state.score.toLocaleString();
@@ -2599,10 +1788,6 @@
         ? "咲耶ジャンプバグでゴール！"
         : `咲耶ジャンプバグ ${ZONES[state.zone].jp}でGAME OVER…`;
       return `${head}\nスコア ${score}\nCNP ${got}/${CNP.length} 救出 ⌐◨-◨\n#咲耶ジャンプバグ`;
-    }
-    function openXIntent(text) {
-      const params = new URLSearchParams({ text, url: SHARE_URL });
-      window.open(`https://twitter.com/intent/tweet?${params.toString()}`, "_blank", "noopener");
     }
 
     // シェア用のリザルトカード。ゲーム画面(HUD・走査線)は含めず、結果だけを読める専用レイアウト
@@ -2688,7 +1873,7 @@
         g.fillRect(x, y, s, s);
         const d = s * 0.88;
         if (has && ch.ready) g.drawImage(ch.img, x + (s - d) / 2, y + (s - d) / 2, d, d);
-        else if (ch.sil) g.drawImage(ch.sil, x + (s - d) / 2, y + (s - d) / 2, d, d);
+        else if (silOf(ch)) g.drawImage(silOf(ch), x + (s - d) / 2, y + (s - d) / 2, d, d);
         g.lineWidth = 2;
         g.strokeStyle = has ? `hsla(${ch.hue},90%,66%,0.9)` : "rgba(232,197,106,0.26)";
         g.strokeRect(x + 1, y + 1, s - 2, s - 2);
@@ -2704,345 +1889,79 @@
       return card;
     }
 
-    shareBtn.addEventListener("click", async (e) => {
-      e.stopPropagation();
-      if (shareBtn.disabled) return;
-      shareBtn.disabled = true;
-      const text = buildShareText();
-      try {
-        const card = buildShareCardCanvas();
-        const blob = await new Promise((resolve) => card.toBlob(resolve, "image/png"));
-        const file = blob ? new File([blob], "sakuya-jumpbug.png", { type: "image/png" }) : null;
-        if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({ text: text + "\n" + SHARE_URL, files: [file] });
-        } else if (file) {
-          const url = URL.createObjectURL(file);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = "sakuya-jumpbug.png";
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          setTimeout(() => URL.revokeObjectURL(url), 30000);
-          openXIntent(text);
-          showToast("画像を保存しました。投稿画面に添付してください");
-        } else {
-          openXIntent(text);
-        }
-      } catch (err) {
-        // 共有シートをキャンセルしたときも AbortError で来るので、それはエラーにしない
-        if (err && err.name !== "AbortError") {
-          showToast("画像を作れなかったので、文章だけで投稿します");
-          openXIntent(text);
-        }
-      } finally {
-        shareBtn.disabled = false;
+    // ------------------------------------------------------------------
+    // 描画の入口。一時停止の幕・演出動画・結果画面は kit がこの上に描く
+    // ------------------------------------------------------------------
+    let wasBlocked = false;
+    function render() {
+      // 縦持ちで止めている間は BGM も止める
+      const blocked = kit.orientationBlocked;
+      if (blocked !== wasBlocked) {
+        wasBlocked = blocked;
+        if (state.phase === "play" && !kit.paused) { if (blocked) BGM.stop(); else BGM.start(); }
       }
-    });
-
-    // ------------------------------------------------------------------
-    // ゲームオーバー/クリアの演出動画(咲耶スクランブルと同じ作り)
-    //  - 1回だけ流し、流し終えたら(または飛ばしたら)結果画面を出す
-    //  - タップ/キーでいつでも飛ばせる
-    //  - 読み込みが間に合っていない・再生できないときは挟まず、従来どおり
-    //    ジングルを鳴らしてすぐ結果画面を出す
-    //  - ランキングの登録フォームとシェアボタンは、結果画面が出てから出す
-    // ------------------------------------------------------------------
-    function createCutsceneVideo(el, src) {
-      let failed = false;
-      let unlocked = false;
-      let playing = false;
-      el.loop = false;
-      el.addEventListener("error", () => { failed = true; playing = false; });
-      el.addEventListener("ended", () => { playing = false; });
-      return {
-        el,
-        // iOS はユーザー操作を経ていない動画の音声再生を拒むので、スタートのタップで
-        // 一度無音で再生→即停止して解錠しておく。読み込みもここから始まる
-        unlock() {
-          if (unlocked) return;
-          unlocked = true;
-          if (!el.src) el.src = src;
-          el.muted = true;
-          const p = el.play();
-          if (p && p.then) p.then(() => { el.pause(); el.currentTime = 0; }).catch(() => {});
-        },
-        // 音付きで流し、拒否されたら無音で映像だけ出して音はジングルで補う。
-        // 効果音オフの間は動画の音も鳴らさない
-        play(fallbackSfx) {
-          if (failed || !el.src) { playing = false; fallbackSfx(); return; }
-          try { el.currentTime = 0; } catch (e) { /* 未読み込みなら無視 */ }
-          el.muted = SFX.muted;
-          playing = true;
-          const p = el.play();
-          if (p && p.catch) {
-            p.catch(() => {
-              el.muted = true;
-              const q = el.play();
-              if (q && q.catch) q.catch(() => { failed = true; playing = false; });
-              fallbackSfx();
-            });
-          }
-        },
-        stop() {
-          playing = false;
-          el.pause();
-          try { el.currentTime = 0; } catch (e) { /* 未読み込みなら無視 */ }
-        },
-        hasFrame() { return !failed && el.readyState >= 2 && el.videoWidth > 0; },
-        // 途切れずに流し切れる見込みがあるか。1回きりの演出なので、間に合わないなら挟まない
-        canPlayThrough() { return !failed && el.readyState >= 3 && el.videoWidth > 0; },
-        isPlaying() { return playing; },
-        syncMuted() { el.muted = SFX.muted; }
-      };
-    }
-    const clearVideo = createCutsceneVideo(document.getElementById("clearVideo"), "assets/clear.mp4");
-    const gameOverVideo = createCutsceneVideo(document.getElementById("gameOverVideo"), "assets/gameover.mp4");
-    function unlockCutsceneVideos() { clearVideo.unlock(); gameOverVideo.unlock(); }
-    function syncCutsceneVideoMute() { clearVideo.syncMuted(); gameOverVideo.syncMuted(); }
-
-    let cutscene = null;   // 流している演出動画(無ければ null)
-
-    function beginCutscene(video, fallbackSfx) {
-      if (!video.canPlayThrough()) { fallbackSfx(); showResultsUI(); return; }
-      cutscene = video;
-      video.play(fallbackSfx);
-    }
-    function endCutscene() {
-      if (!cutscene) return;
-      const v = cutscene;
-      cutscene = null;
-      v.stop();
-      state.timer = 0;       // 結果画面が出てから1秒は再スタートを受け付けない(誤タップよけ)
-      showResultsUI();
-    }
-    // 流し終えたら自動で結果画面へ。再生に失敗して止まった場合も同じ
-    clearVideo.el.addEventListener("ended", () => { if (cutscene === clearVideo) endCutscene(); });
-    gameOverVideo.el.addEventListener("ended", () => { if (cutscene === gameOverVideo) endCutscene(); });
-    clearVideo.el.addEventListener("error", () => { if (cutscene === clearVideo) endCutscene(); });
-    gameOverVideo.el.addEventListener("error", () => { if (cutscene === gameOverVideo) endCutscene(); });
-
-    // 結果画面のボタン類(シェア・ランキング登録)。演出の後に出す
-    function showResultsUI() {
-      shareBtn.hidden = false;
-      rankOnFinish();
-    }
-
-    // 演出中の画面。ゲーム画面を暗く沈め、動画を金の枠で囲んで中央に大きく出す
-    function drawCutscene() {
-      ctx.fillStyle = "rgba(0, 0, 0, 0.78)";
-      ctx.fillRect(0, 0, W, H);
-      const v = cutscene.el;
-      if (cutscene.hasFrame()) {
-        const vw = 800;
-        const vh = vw * (v.videoHeight / v.videoWidth);
-        const vx = (W - vw) / 2;
-        const vy = (H - vh) / 2 - 8;
-        ctx.drawImage(v, vx, vy, vw, vh);
-        ctx.strokeStyle = C.gold;
-        ctx.lineWidth = 2;
-        ctx.strokeRect(vx + 1, vy + 1, vw - 2, vh - 2);
-        if (blinkOn()) {
-          ctx.textAlign = "center";
-          ctx.font = C.font(9);
-          ctx.fillStyle = C.dim;
-          ctx.fillText(isTouch ? "TAP TO SKIP" : "PRESS ANY KEY TO SKIP", W / 2, vy + vh + 22);
-          ctx.textAlign = "left";
-        }
-      }
-    }
-
-    // ------------------------------------------------------------------
-    // ランキング(咲耶Nounラリーと同じ作り)
-    // GAS(Google Apps Script)のウェブアプリに JSON で読み書きする(apps-script.gs)。
-    // GAS_URL が空の間は枠ごと出さない ― デプロイ後にこの1行を差し替えれば動く
-    // ------------------------------------------------------------------
-    // 咲耶シリーズ共通のランキング（sakuya-kit/gas/apps-script.gs）。?game=jumpbug でこのタイトルの
-    // シートを読み書きし、他のタイトルと合わせた総合ランキングにも載る。旧スプレッドシート(score3)の
-    // 記録は共通のスプレッドシートへ取り込み済み
-    const GAS_URL = "https://script.google.com/macros/s/AKfycby-UoKAfHw4eBULVb37tQzwPEhNm65B_HUktd9Sh0ZxMdOdmnRHdub0NeeXUCAqg8bG/exec?game=jumpbug";
-
-    const rankEl = document.getElementById("rank");
-    const rankList = document.getElementById("ranklist");
-    const rankForm = document.getElementById("rankform");
-    const rankName = document.getElementById("rankname");
-    const rankXid = document.getElementById("rankxid");
-    const rankXidP = document.getElementById("rankxidp");
-    const rankSend = document.getElementById("ranksend");
-    const rankStat = document.getElementById("rankstat");
-
-    let rankRows = [];        // サーバから取った記録(スコアの降順)
-    let rankSent = false;     // 同じプレイで二重登録しない
-    let rankScroll = null;    // 結果画面からフォームへ自動で送るタイマー
-    let xidState = "empty";   // empty | loading | ok | ng
-    let xidToken = 0;         // 入力が変わったら古い確認結果を捨てるための連番
-
-    const esc = (t) => String(t).replace(/[&<>"']/g, (c) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-    const XID_RE = /^[A-Za-z0-9_]{1,15}$/;
-
-    // どこまで進んだか(0〜100)。ゴールしたら 100
-    function progressPct() {
-      if (state.phase === "clear") return 100;
-      const x = state.car ? state.car.x + CAR_W / 2 : 0;
-      return Math.max(0, Math.min(99, Math.floor(x / level.goalX * 100)));
-    }
-
-    function renderRank() {
-      if (!rankRows.length) {
-        rankList.innerHTML = '<li class="rank-empty">まだ記録がありません</li>';
+      ctx.save();
+      if (kit.phase === "title") {
+        state.frame = kit.frame;   // タイトルの町と車を動かす
+        drawTitle();
+        drawCrt();
+        ctx.restore();
         return;
       }
-      rankList.innerHTML = rankRows.slice(0, 10).map((r, i) => {
-        const no = i + 1;
-        const medal = no === 1 ? "&#x1F947;" : no === 2 ? "&#x1F948;" : no === 3 ? "&#x1F949;" : no;
-        const xid = String(r.xid || "").replace(/^@/, "").trim();
-        const xPart = XID_RE.test(xid)
-          ? '<img src="https://unavatar.io/x/' + encodeURIComponent(xid) + '" alt="" loading="lazy"' +
-            ' onerror="this.style.visibility=\'hidden\'">' +
-            '<a href="https://x.com/' + encodeURIComponent(xid) + '" target="_blank" rel="noopener noreferrer">@' + esc(xid) + "</a>"
-          : "";
-        const dev = r.device === "モバイル" ? "\uD83D\uDCF1 " : r.device === "PC" ? "\uD83D\uDCBB " : "";
-        const sub = (r.cleared ? "ゴール" : "進行 " + (r.progress | 0) + "%") + " ・ CNP " + (r.cnp | 0) + "/" + CNP.length;
-        return '<li class="rank-row">' +
-          '<span class="rank-no">' + medal + "</span>" +
-          '<span class="rank-name">' + dev + esc(r.nickname) + "</span>" +
-          '<span class="rank-x">' + xPart + "</span>" +
-          '<span class="rank-sc">' + Math.floor(r.score) + "</span>" +
-          '<span class="rank-sub">' + sub + "</span>" +
-          "</li>";
-      }).join("");
+      drawBackground();
+      const sx = state.shake ? (Math.random() - 0.5) * state.shake : 0;
+      const sy = state.shake ? (Math.random() - 0.5) * state.shake : 0;
+      ctx.save();
+      ctx.translate(Math.round(-state.camX + sx), Math.round(sy));
+      drawWorld();
+      ctx.restore();
+      drawHud();
+      drawCrt();
+      ctx.restore();
     }
 
-    function loadRank() {
-      if (!GAS_URL) return;
-      fetch(GAS_URL, { cache: "no-store" })
-        .then((r) => r.json())
-        .then((d) => { rankRows = (d.records || []).slice().sort((a, b) => b.score - a.score); renderRank(); })
-        .catch(() => renderRank());   // 取れなくても「まだ記録がありません」で済ませる
-    }
-
-    // 10件そろっていなければ誰でも載る。そろっていれば10位より上のときだけ
-    const rankQualifies = (sc) => sc > 0 && (rankRows.length < 10 || sc > rankRows[9].score);
-
-    function rankOnFinish() {
-      if (!GAS_URL) return;
-      if (rankSent || !rankQualifies(state.score)) { rankForm.classList.remove("show"); return; }
-      rankForm.classList.add("show");
-      rankName.value = ""; rankXid.value = ""; rankStat.textContent = "";
-      xidState = "empty"; setXidP("", "");
-      updateSend();
-      // 結果画面を少し見せてから、フォームまで自動で送る(咲耶Nounラリーと同じく2秒後)
-      clearTimeout(rankScroll);
-      rankScroll = setTimeout(() => {
-        if (rankForm.classList.contains("show")) rankForm.scrollIntoView({ behavior: "smooth", block: "center" });
-      }, 2000);
-    }
-
-    function rankReset() {
-      rankSent = false;
-      clearTimeout(rankScroll);
-      rankForm.classList.remove("show");
-      if (document.activeElement && rankForm.contains(document.activeElement)) document.activeElement.blur();
-      // フォームまで下りてから遊び直したときは、ゲーム画面へ戻す
-      if (window.scrollY > 0) window.scrollTo({ top: 0 });
-    }
-
-    function setXidP(mode, html) {
-      rankXidP.className = mode ? "show " + mode : "";
-      rankXidP.innerHTML = html || "";
-    }
-    function updateSend() {
-      // 名前は必須。X ID は空ならよいが、入れたなら確認が取れるまで押せない
-      rankSend.disabled = !rankName.value.trim() || (xidState !== "empty" && xidState !== "ok");
-    }
-
-    // unavatar.io の画像が読めるかどうかで、Xアカウントの実在を確かめる。
-    // API キーが要らず、失敗しても画像が出ないだけで済む
-    function verifyXid(raw) {
-      const u = String(raw || "").replace(/^@/, "").trim();
-      const token = ++xidToken;
-      if (!u) { xidState = "empty"; setXidP("", ""); updateSend(); return; }
-      if (!XID_RE.test(u)) {
-        xidState = "ng";
-        setXidP("ng", "半角の英数字とアンダースコアだけ、15文字までです");
-        updateSend(); return;
+    // 結果画面に足す飾り: クリアはボーナスの内訳、ゲームオーバーは到達したゾーン。
+    // 下に NEW RECORD と救出した CNP を並べる
+    function drawResultExtra(g, { kind, rect, result, playing }) {
+      if (kind === "gameOver" && playing) return;   // 動画の間は動画だけ
+      const c = kit.retro.colors;
+      g.save();
+      g.textAlign = "center";
+      let y;
+      g.font = kit.retro.fontBody(15);
+      if (kind === "clear") {
+        y = (rect ? rect.y + rect.h + 42 : H / 2 - 30) + 64;
+        const b = state.bonus;
+        if (b) {
+          g.fillStyle = c.ink;
+          g.fillText(`燃料 +${b.fuel}　残機 +${b.lives}　CNP全員救出 ${b.all ? "+" + b.all : "─"}`, W / 2, y);
+        }
+      } else {
+        y = H / 2 + 70;
+        const z = ZONES[state.zone];
+        g.fillStyle = c.ink;
+        g.fillText(`SCORE ${String(result.score).padStart(7, "0")}　${z.jp}まで到達（${progressPct()}%）`, W / 2, y);
       }
-      xidState = "loading"; setXidP("", "確認中…"); updateSend();
-      const img = new Image();
-      img.onload = () => {
-        if (token !== xidToken) return;
-        xidState = "ok";
-        setXidP("ok", '<img src="https://unavatar.io/x/' + encodeURIComponent(u) + '" alt=""><span>@' + esc(u) + " を確認しました</span>");
-        updateSend();
-      };
-      img.onerror = () => {
-        if (token !== xidToken) return;
-        xidState = "ng"; setXidP("ng", "このIDのXアカウントが見つかりません");
-        updateSend();
-      };
-      img.src = "https://unavatar.io/x/" + encodeURIComponent(u);
-    }
-
-    rankXid.addEventListener("input", () => {
-      // 打っている間は押せないままにする。空に戻したときだけ即座に戻す
-      if (!rankXid.value.trim()) { xidState = "empty"; setXidP("", ""); }
-      else { xidState = "loading"; setXidP("", ""); }
-      updateSend();
-    });
-    rankXid.addEventListener("blur", () => verifyXid(rankXid.value));
-    rankName.addEventListener("input", updateSend);
-
-    rankSend.addEventListener("click", () => {
-      const nickname = rankName.value.trim();
-      if (!nickname) { rankStat.textContent = "ニックネームを入れてください"; rankName.focus(); return; }
-      if (xidState !== "empty" && xidState !== "ok") {
-        rankStat.textContent = "X の ID を確認できるまで登録できません"; rankXid.focus(); return;
+      if (result.newRecord && kit.retro.blinkOn()) {
+        g.font = kit.retro.font(10);
+        g.fillStyle = c.magenta;
+        g.fillText("NEW RECORD!", W / 2, y + 20);
       }
-      rankSend.disabled = true; rankStat.textContent = "登録中…";
-      const record = {
-        nickname,
-        xid: rankXid.value.trim().replace(/^@/, ""),
-        score: Math.floor(state.score),
-        created: Date.now(),
-        device: isTouch ? "モバイル" : "PC",
-        progress: progressPct(),
-        cnp: state.rescued.filter(Boolean).length,
-        cleared: state.phase === "clear"
-      };
-      // no-cors ではなく text/plain で送る。GAS は preflight に応えないので、
-      // Content-Type を単純なものにしておかないと CORS で弾かれる
-      fetch(GAS_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ action: "add", record })
-      })
-        .then((r) => r.json())
-        .then((d) => {
-          if (!d.success) throw new Error(d.error || "failed");
-          rankSent = true;
-          rankStat.textContent = "登録しました";
-          rankForm.classList.remove("show");
-          loadRank();
-        })
-        .catch(() => {
-          rankStat.textContent = "登録できませんでした。通信を確かめてください";
-          rankSend.disabled = false;
-        });
-    });
-
-    // 遊んでいる間は枠ごと畳む。出したままだとページが縦に伸び、指で少しなぞった
-    // だけでスクロールしてゲーム画面が切れる。タイトル画面と結果画面でだけ出す
-    function updateRankVisible() {
-      if (!GAS_URL) return;
-      const hide = state.phase === "play" || state.phase === "dying" || state.phase === "goal" || !!cutscene;
-      if (rankEl.hidden !== hide) rankEl.hidden = hide;
+      // 救出した CNP(取れなかった枠は黒いシルエット)
+      const slot = 26, gap = 4;
+      const x0 = W / 2 - (CNP.length * (slot + gap) - gap) / 2;
+      const ry = y + 30;
+      CNP.forEach((ch, i) => {
+        const x = x0 + i * (slot + gap);
+        if (state.rescued[i] && ch.ready) g.drawImage(ch.img, x, ry, slot, slot);
+        else if (silOf(ch)) { g.globalAlpha = 0.6; g.drawImage(silOf(ch), x, ry, slot, slot); g.globalAlpha = 1; }
+      });
+      g.restore();
     }
-
-    if (GAS_URL) { rankEl.hidden = false; renderRank(); loadRank(); }
 
     // デバッグ/検証用のフック(本番の遊びには影響しない)
-    window.__jumpbug = { state, level, input };
+    window.kit = kit;
+    window.__jumpbug = { state, level, kit };
     window.__tick = tick; // 自動テスト用: 1フレーム進める
     window.__card = buildShareCardCanvas;
     window.__shareText = buildShareText;

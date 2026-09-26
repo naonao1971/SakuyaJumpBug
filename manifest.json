@@ -1,7 +1,7 @@
 {
   "name": "咲耶ジャンプバグ",
   "short_name": "咲耶ジャンプバグ",
-  "description": "⌐◨-◨カーで跳ねながら城下町・洞窟・天守を抜け、CNP11体を拾って鳥居のゴールを目指すレトロ風横スクロールゲーム。",
+  "description": "⌐◨-◨カーで跳ねながら城下町・洞窟・天守を抜け、CNP11体を拾ってゴールの鳥居を目指す横スクロールゲーム",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -18,6 +18,18 @@
     {
       "src": "apple-touch-icon.png",
       "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     }
