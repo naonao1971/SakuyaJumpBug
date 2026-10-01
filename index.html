@@ -31,7 +31,7 @@
   <meta name="twitter:image" content="https://jumpbug.naoblock.jp/ogp.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.4.0/kit.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.5.0/kit.css" />
   <style>
     /* 色・部品の寸法・配置は kit のまま（ジャンプバグは kit の既定色と同じ） */
     /* 遊び方。canvas の下、ランキングの前に置く */
@@ -69,7 +69,7 @@
       <li>ジャンプは押している間ほど高く跳ぶ。空中でもう2回まで跳べる。</li>
       <li>敵は撃つか上から踏むと倒せる。溶岩に落ちる・トゲや敵に当たる・燃料切れ・壁と画面の左端にはさまれるとミス。</li>
       <li>途中の提灯がチェックポイント。20000点ごとに1UP。ゴールすると残燃料・残機・CNP全員救出がボーナスになる。</li>
-      <li>スマホ: 左半分を押したまま倒す（左右で前後／上でジャンプ）・右半分か ⤒ でジャンプ・🔫 をタップで自動連射、押し続けて撃つ</li>
+      <li>スマホ: 左半分を押したまま倒す（左右で前後／上でジャンプ）・右半分か A でジャンプ・B で撃つ・⚙ で音・全画面・自動連射の設定</li>
       <li>PC: ←→ 前後 ・ Space / ↑ / Z ジャンプ ・ X 撃つ ・ V 自動連射 ・ P 一時停止 ・ M 音</li>
       <li>姉妹作: <a href="https://sakuya.naoblock.jp/">咲耶スクランブル</a> / <a href="https://rally.naoblock.jp/">咲耶Nounラリー</a></li>
     </ul>
@@ -78,7 +78,7 @@
   <script type="module">
     // 共通部分は sakuya-kit（https://github.com/naonao1971/sakuya-kit）。版を上げるときは
     // kit.css と同じ番号にそろえ、CHANGELOG を読んでから実機で確かめる
-    import { createKit } from "https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.4.0/kit.js";
+    import { createKit } from "https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.5.0/kit.js";
 
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d");
@@ -112,13 +112,16 @@
         stick: true,
         stickUpButton: "jump",
         rightHalfButton: "jump",
+        // シリーズ共通のボタン配置（F3）: A・B と ⚙ 設定。音・全画面・自動連射は ⚙ の中
+        layout: "ab",
         buttons: [
-          { id: "jump", label: "⤒", ariaLabel: "ジャンプ", keys: ["KeyZ"], primary: true,
+          { id: "jump", slot: "A", hint: "JUMP", ariaLabel: "ジャンプ", keys: ["KeyZ"],
             onPress: () => { jumpLatch = true; } },
-          { id: "fire", label: "🔫", ariaLabel: "バルカン（タップで自動連射の切り替え・押し続けて撃つ）", keys: ["KeyX", "KeyJ"] },
+          { id: "fire", slot: "B", hint: "SHOT", ariaLabel: "バルカン（押している間撃つ）", keys: ["KeyX", "KeyJ"],
+            onPress: () => { fireLatch = true; } },
         ],
-        // バルカン: 短くタップで自動連射の切り替え、押し続けたら撃つ。スマホは最初からオン
-        autoFire: { button: "fire", defaultOn: "touch", key: "KeyV" },
+        // 自動連射は ⚙ の設定（と V キー）で切り替える。スマホは最初からオンで、オンの間は B をマゼンタで縁取る
+        autoFire: { defaultOn: "touch", key: "KeyV", showOn: "fire" },
       },
       cutscenes: {
         // どちらも流し終えるか、タップで飛ばすまで結果画面を待たせる
@@ -137,7 +140,7 @@
         image: () => buildShareCardCanvas(),
       },
       help: {
-        mobile: "左半分を押したまま倒す: 左右で前後／上でジャンプ。右半分か ⤒ でもジャンプ",
+        mobile: "左半分を押したまま倒す: 左右で前後／上でジャンプ。A でジャンプ、B で撃つ、⚙ で設定",
         pc: "←→ 前後 ・ Space/↑/Z ジャンプ ・ X 撃つ ・ V 自動連射 ・ P 一時停止 ・ M 音",
         playing: "長押しで高く跳ぶ。空中でもう2回まで跳べる",
       },
@@ -154,7 +157,7 @@
       },
       onMute: (m) => SFX.setMuted(m),
       // ポーズ・タブ切替・通知の割り込みで、押しっぱなしのジャンプを捨てる
-      onInputReset: () => { spaceHeld = false; jumpLatch = false; },
+      onInputReset: () => { spaceHeld = false; jumpLatch = false; fireLatch = false; },
       // Space はプレイ中だけジャンプに使う(タイトルと結果画面では kit のスタート)
       onKeyDown: (e) => {
         if (e.code !== "Space" || kit.phase !== "playing" || kit.paused) return;
@@ -626,18 +629,21 @@
 
     // キー・スティック・ボタンを合わせた、このフレームの入力。
     //  - 左右: ←→/AD とスティックの左右(少しでも倒せば効く。旧版と同じデジタル扱い)
-    //  - ジャンプ: JUMP ボタン・Z・Space・↑/W・スティックの上・画面右半分
+    //  - ジャンプ: A ボタン・Z・Space・↑/W・スティックの上・画面右半分
+    //  - ショット: B ボタン・X / J（fireLatch で短いタップも1発撃つ）
     //  - jumpLatch: 1フレームより短いタップでも取りこぼさないように、押した瞬間を覚えておく
-    let spaceHeld = false, jumpLatch = false;
+    let spaceHeld = false, jumpLatch = false, fireLatch = false;
     function effectiveInput() {
       const I = kit.input, sx = I.stickX;
       const jump = !!I.buttons.jump || I.up || spaceHeld || jumpLatch;
+      const fire = !!I.buttons.fire || fireLatch;
       jumpLatch = false;
+      fireLatch = false;
       return {
         left: I.left || sx < -0.15,
         right: I.right || sx > 0.15,
         jump,
-        fire: !!I.buttons.fire
+        fire
       };
     }
 
