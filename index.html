@@ -20,15 +20,16 @@
   <meta property="og:site_name" content="SAKUYA SERIES" />
   <meta property="og:title" content="SAKUYA JUMP BUG ─ ⌐◨-◨ CAR" />
   <meta property="og:description" content="⌐◨-◨カーで跳ねながら城下町・洞窟・天守を抜け、CNP11体を拾ってゴールの鳥居を目指す横スクロールゲーム" />
-  <meta property="og:url" content="https://jumpbug.naoblock.jp/" />
-  <meta property="og:image" content="https://jumpbug.naoblock.jp/ogp.png" />
+  <meta property="og:url" content="https://jumpbug.naoblock.com/" />
+  <link rel="canonical" href="https://jumpbug.naoblock.com/">
+  <meta property="og:image" content="https://jumpbug.naoblock.com/ogp.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta property="og:locale" content="ja_JP" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="SAKUYA JUMP BUG ─ ⌐◨-◨ CAR" />
   <meta name="twitter:description" content="⌐◨-◨カーで跳ねながら城下町・洞窟・天守を抜け、CNP11体を拾ってゴールの鳥居を目指す横スクロールゲーム" />
-  <meta name="twitter:image" content="https://jumpbug.naoblock.jp/ogp.png" />
+  <meta name="twitter:image" content="https://jumpbug.naoblock.com/ogp.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.8.0/kit.css" />
@@ -71,7 +72,7 @@
       <li>途中の提灯がチェックポイント。20000点ごとに1UP。ゴールすると残燃料・残機・CNP全員救出がボーナスになる。</li>
       <li>スマホ: 左半分を押したまま倒す（左右で前後／上でジャンプ）・右半分か A でジャンプ・B で撃つ・⚙ で音・全画面・自動連射の設定</li>
       <li>PC: ←→ 前後 ・ Space / ↑ / Z ジャンプ ・ X 撃つ ・ V 自動連射 ・ P 一時停止 ・ M 音</li>
-      <li>姉妹作: <a href="https://sakuya.naoblock.jp/">咲耶スクランブル</a> / <a href="https://rally.naoblock.jp/">咲耶Nounラリー</a></li>
+      <li>姉妹作: <a href="https://sakuya.naoblock.com/">咲耶スクランブル</a> / <a href="https://rally.naoblock.com/">咲耶Nounラリー</a></li>
     </ul>
   </details>
 
@@ -88,7 +89,7 @@
     // 咲耶シリーズ共通のランキング（sakuya-kit/gas/apps-script.gs）。?game=jumpbug のシートを読み書きし、
     // 他のタイトルと合わせた総合ランキングにも載る。旧スプレッドシート(score3)の記録は取り込み済み
     const GAS_URL = "https://script.google.com/macros/s/AKfycby-UoKAfHw4eBULVb37tQzwPEhNm65B_HUktd9Sh0ZxMdOdmnRHdub0NeeXUCAqg8bG/exec";
-    const SHARE_URL = "https://jumpbug.naoblock.jp/";
+    const SHARE_URL = "https://jumpbug.naoblock.com/";
 
     const kit = createKit({
       gameId: "jumpbug",
@@ -1893,7 +1894,7 @@
       g.fillText("#咲耶ジャンプバグ", CW / 2, 600);
       g.fillStyle = C.dim;
       g.font = C.font(11);
-      g.fillText("jumpbug.naoblock.jp", CW / 2, 628);
+      g.fillText("jumpbug.naoblock.com", CW / 2, 628);
       return card;
     }
 
